@@ -1,0 +1,7 @@
+networks:
+  - name: lzero
+    rpc: http://127.0.0.1:50759
+    endpoint: 0x1a44076050125825900e736c501f859c50fE728c
+    eid: "30101"
+    exec_fee: "10000000000000000"
+    private_key: 0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31
