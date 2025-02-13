@@ -1,5 +1,5 @@
 // src/LayerZeroCommitter.ts
-import {decodeAbiParameters, getContract, HttpTransport, PublicClient} from "viem";
+import {decodeAbiParameters, HttpTransport, PublicClient} from "viem";
 import { Chain } from "viem/chains";
 import { chainConfig } from "./config";
 import {abi as endpointABI} from "./abis/EndpointV2";
