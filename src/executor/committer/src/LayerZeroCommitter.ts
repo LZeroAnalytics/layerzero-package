@@ -17,6 +17,9 @@ export type LZMessageEvent = {
     transactionHash: string;
 };
 
+const EXECUTOR_PAID_SIG: `0x${string}` =
+    "0x61ed099e74a97a1d7f8bb0952a88ca8b7b8ebd00c126ea04671f92a81213318a";
+
 // A callback type for handling events.
 export type OnEvent = (event: LZMessageEvent) => void;
 
@@ -80,7 +83,7 @@ export class LayerZeroCommitter {
             if (logSig === log.topics[0]) return;
 
             // If the log is not an executor paid signature, we can continue.
-            // if (logSig !== EXECUTOR_PAID_SIG) continue;
+            if (logSig !== EXECUTOR_PAID_SIG) continue;
 
             if (
                 txLog.address.toLowerCase() !== chainConfig.trustedSendLib.toLowerCase()
