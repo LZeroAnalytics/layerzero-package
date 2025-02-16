@@ -1,5 +1,6 @@
 // src/index.ts
 import { config as dotenvConfig } from "dotenv";
+import { createClient } from "redis";
 import {Account, Chain, createWalletClient, http, HttpTransport, WalletClient} from "viem";
 import { mainnet } from "viem/chains";
 import { chainConfig } from "./config";
@@ -20,27 +21,26 @@ const client: WalletClient<HttpTransport, Chain, Account> = createWalletClient({
 
 async function main() {
     const executor = new LayerZeroExecutor(chainConfig, client);
-    const stop = executor.start();
+    executor.start();
 
-    // For demonstration, we add a dummy event after 5 seconds.
-    setTimeout(() => {
-        const dummyEvent: LZMessageEvent = {
-            packet: {
-                srcEid: 30101,
-                sender: "0x0000000000000000000000000000000000000000",
-                nonce: 1,
-                receiver: "0x0000000000000000000000000000000000000000",
-                guid: "0xabcdef",
-                message: "0x",
-            },
-            packetHeader: "0xabcdef",
-            payloadHash: "0x123456",
-            rawPayload: "0x",
-            transactionHash: "0xdeadbeef",
-        };
-        console.log("Adding dummy event to executor.");
-        executor.addEvent(dummyEvent);
-    }, 5000);
+    const redisSub = createClient({
+        url: process.env.BROKER_URL || "redis://redis-broker:6379",
+    });
+    await redisSub.connect();
+
+    // Subscribe to the Redis channel used by the committer.
+    await redisSub.subscribe("layerzero-events", (message) => {
+        console.log("Executor received event from broker:", message);
+        try {
+            const event: LZMessageEvent = JSON.parse(message);
+            executor.addEvent(event);
+        } catch (e) {
+            console.error("Failed to parse event:", e);
+        }
+    });
+
+    console.log("LayerZero Executor is now listening for events from Redis...");
+    process.stdin.resume();
 }
 
 main().catch((e) => console.error(e));
