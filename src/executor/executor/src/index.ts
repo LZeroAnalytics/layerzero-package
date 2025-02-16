@@ -28,8 +28,10 @@ async function main() {
     });
     await redisSub.connect();
 
+    const networkName = process.env.NAME || 'layerzero';
+
     // Subscribe to the Redis channel used by the committer.
-    await redisSub.subscribe("layerzero-events", (message) => {
+    await redisSub.subscribe(networkName, (message) => {
         console.log("Executor received event from broker:", message);
         try {
             const event: LZMessageEvent = JSON.parse(message);

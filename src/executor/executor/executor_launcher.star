@@ -1,5 +1,6 @@
 def add_executor(
         plan,
+        name,
         rpc_url,
         endpoint,
         endpoint_view,
@@ -12,13 +13,14 @@ def add_executor(
         broker_url
 ):
     service = plan.add_service(
-        name = "layerzero-executor",
+        name = "{}-executor".format(name),
         config = ServiceConfig(
             image = "tiljordan/layerzero-executor:v1.0.0",
             ports = {},
             entrypoint = ["node", "dist/index.js"],
             cmd = [],
             env_vars = {
+                "NAME": name,
                 "RPC_URL": rpc_url,
                 "ENDPOINT": endpoint,
                 "ENDPOINT_VIEW": endpoint_view,
