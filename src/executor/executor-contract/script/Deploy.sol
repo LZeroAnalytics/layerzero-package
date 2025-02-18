@@ -12,10 +12,9 @@ contract DeploySimpleExecutor is Script {
 
         // Active network
         string memory activeNetwork = vm.envString("NETWORK");
-        string memory activeNetworkUpper = toUpper(activeNetwork);
 
         // Active network parameters.
-        address endpointAddr = vm.envAddress(string(abi.encodePacked("ENDPOINT_", activeNetworkUpper)));
+        address endpointAddr = vm.envAddress(string("ENDPOINT"));
 
         // Read precomputed comma-separated lists of destination EIDs and fees.
         string memory dstEidsStr = vm.envString("DST_EIDS");

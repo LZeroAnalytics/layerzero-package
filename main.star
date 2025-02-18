@@ -1,6 +1,6 @@
 executor_contract_deployer = import_module("./src/executor/contract_deployer.star")
-committer_deployer = import_module("./src/executor/committer/committer_deployer.star")
-executor_deployer = import_module("./src/executor/executor/executor_deployer.star")
+committer_deployer = import_module("./src/executor/committer/committer_launcher.star")
+executor_deployer = import_module("./src/executor/executor/executor_launcher.star")
 redis = import_module("github.com/kurtosis-tech/redis-package/main.star")
 
 def run(plan, args):
@@ -14,7 +14,7 @@ def run(plan, args):
         service_name = "broker-redis",
         image = "redis:7",
     )
-    redis_url = "{}:{}".format(redis_output.hostname, redis_output.port_number)
+    redis_url = "redis://{}:{}".format(redis_output.hostname, redis_output.port_number)
     plan.print("Redis broker running at " + redis_url)
 
     # For each network, launch a committer and an executor

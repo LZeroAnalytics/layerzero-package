@@ -18,17 +18,16 @@ def deploy_contract(plan, networks):
         active_upper = active.upper()
         env_vars = {
             "NETWORK": active,
-            "RPC_" + active_upper: net["rpc"],
-            "ENDPOINT_" + active_upper: net["endpoint"],
-            "EID_" + active_upper: net["eid"],
-            "EXEC_FEE_" + active_upper: net["exec_fee"],
+            "RPC": net["rpc"],
+            "ENDPOINT": net["endpoint"],
+            "EID": net["eid"],
+            "EXEC_FEE": net["exec_fee"],
             "PRIVATE_KEY": net["private_key"],
             "DST_EIDS": dst_eids_str,
             "FEES": fees_str,
         }
         # The forge command uses the active network's RPC URL via --fork-url.
-        cmd = ("forge script script/Deploy.sol:DeploySimpleExecutor "
-               "--broadcast --skip-simulation --via-ir --fork-url " + net["rpc"])
+        cmd = ("forge script script/Deploy.sol:DeploySimpleExecutor --broadcast --skip-simulation --via-ir --fork-url " + net["rpc"])
         plan.run_sh(
             name = "contract-deployer-" + active,
             description = "Deploying Executor contract to network " + active,

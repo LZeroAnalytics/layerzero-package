@@ -23,10 +23,15 @@ async function main() {
 
     const committer = new LayerZeroCommitter(client);
 
+    // Replace to convert big int to string and using stringify
+    const replacer = (key: string, value: any): any => {
+        return typeof value === 'bigint' ? value.toString() : value;
+    };
+
     // Start watching for events.
     const stop = committer.start(async (event: LZMessageEvent) => {
         console.log("Committer received event:", event.transactionHash);
-        await redisClient.publish(networkName, JSON.stringify(event));
+        await redisClient.publish(networkName, JSON.stringify(event, replacer));
     });
 
     console.log("LayerZero Committer is now listening for events and publishing to Redis...");
