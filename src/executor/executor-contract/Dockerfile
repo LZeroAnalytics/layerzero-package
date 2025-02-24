@@ -18,6 +18,8 @@ RUN forge build
 FROM ghcr.io/foundry-rs/foundry:latest
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y jq
+
 # Copy all project files (including built artifacts) from the builder stage.
 COPY --from=builder /app /app
 

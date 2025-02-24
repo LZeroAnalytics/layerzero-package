@@ -13,6 +13,7 @@ export interface ChainConfig {
     trustedReceiveLibView: `0x${string}`;
     eid: number;
     executor: `0x${string}`;
+    dvn: `0x${string}`;
 }
 
 export const chainConfig: ChainConfig = {
@@ -26,4 +27,5 @@ export const chainConfig: ChainConfig = {
     trustedReceiveLibView: process.env.TRUSTED_RECEIVE_LIB_VIEW as `0x${string}`,
     eid: parseInt(process.env.EID || "0"),
     executor: process.env.EXECUTOR as `0x${string}`,
+    dvn: process.env.DVN_ADDR as `0x${string}`,
 };

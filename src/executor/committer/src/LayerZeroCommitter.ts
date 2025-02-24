@@ -3,16 +3,18 @@ import {decodeAbiParameters, HttpTransport, PublicClient} from "viem";
 import { Chain } from "viem/chains";
 import { chainConfig } from "./config";
 import {abi as endpointABI} from "./abis/EndpointV2";
-import {Packet, PacketSerializer} from "./encoding";
 import {config as dotenvConfig} from "dotenv";
+import { Packet, PacketV1Codec } from "@layerzerolabs/lz-v2-utilities";
 
 dotenvConfig();
 
 // Define the shape of an event that our committer will output.
 export type LZMessageEvent = {
-    packet: Packet;
-    packetHeader: `0x${string}`;
-    payloadHash: `0x${string}`;
+    // The official Packet type is different; define fields you want to store
+    // or just store the entire decoded object.
+    packet: Packet,
+    packetHeader: string;
+    payloadHash: string;
     rawPayload: `0x${string}`;
     transactionHash: string;
 };
@@ -108,13 +110,14 @@ export class LayerZeroCommitter {
             }
 
             // As we've found a PacketSent followed by an ExecutorPaid, we can stop looking for more logs and return the decoded log.
-            const payLoad = log.args.encodedPayload;
+            const payLoad = log.args.encodedPayload as `0x${string}`;
             // This should never occur
             if (!payLoad) continue;
 
-            const packet = PacketSerializer.deserialize(payLoad);
-            const packetHeader = PacketSerializer.getHeader(payLoad);
-            const payloadHash = PacketSerializer.getPayloadHash(payLoad);
+            const packetV1Codec = PacketV1Codec.from(payLoad);
+            const packet = packetV1Codec.toPacket();
+            const packetHeader = packetV1Codec.header();
+            const payloadHash = packetV1Codec.payloadHash();
 
             if (packet.srcEid != chainConfig.eid) continue; // This should not be possible.
 

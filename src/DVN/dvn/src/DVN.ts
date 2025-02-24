@@ -15,6 +15,7 @@ import { bytes32ToEthAddress, hexZeroPadTo32 } from "@layerzerolabs/lz-v2-utilit
 import { abi as endpointABI } from "./abis/EndpointV2";
 import { abi as receiveLibViewABI } from "./abis/ReceiveUln302View";
 import { abi as receiveLibABI } from "./abis/ReceiveUln302";
+import { abi as dvnABI } from "./abis/DVNContract";
 
 // The DVN offchain component implements the DVN workflow.
 export class DVN {
@@ -53,6 +54,13 @@ export class DVN {
             abi: receiveLibABI,
             client: this.client,
         });
+
+        const dvnContract = getContract({
+            address: this.config.dvn,
+            abi: dvnABI,
+            client: this.client,
+        });
+
         const ulnConfig = await receiveLibContract.read.getUlnConfig([
             oapp,
             event.packet.srcEid,
@@ -76,7 +84,7 @@ export class DVN {
         const confirmations: bigint = ulnConfig.confirmations;
 
         console.log("Submitting DVN _verify transaction...");
-        const tx = await receiveLibContract.write.verify(
+        const tx = await dvnContract.write.verifyPacket(
             [event.packetHeader, event.payloadHash, confirmations],
             {
                 gas: BigInt(1_000_000),

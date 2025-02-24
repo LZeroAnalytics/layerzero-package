@@ -10,6 +10,7 @@ def deploy_contract(plan, networks):
             "RPC": net["rpc"],
             "ENDPOINT": net["endpoint"],
             "PRIVATE_KEY": net["private_key"],
+            "TRUSTED_RECEIVE_LIB": net["trusted_receive_lib"],
         }
         # The forge command uses the active network's RPC URL via --fork-url.
         cmd = ("forge script script/Deploy.sol:DeployDVNContract --broadcast --json --skip-simulation --via-ir --fork-url " + net["rpc"] + " | grep 'contract_address' | jq -r '.contract_address' | tr -d '\n'")

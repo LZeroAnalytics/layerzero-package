@@ -1,6 +1,7 @@
 def launch_committer(
         plan,
         name,
+        chain_id,
         rpc_url,
         endpoint,
         trusted_send_lib,
@@ -9,6 +10,7 @@ def launch_committer(
         private_key,
         broker_url
 ):
+    plan.print("Starting committer with name " + name)
     service = plan.add_service(
         name = "{}-committer".format(name),
         config = ServiceConfig(
@@ -18,6 +20,7 @@ def launch_committer(
             cmd = [],
             env_vars = {
                 "NAME": name,
+                "CHAIN_ID": chain_id,
                 "RPC_URL": rpc_url,
                 "ENDPOINT": endpoint,
                 "TRUSTED_SEND_LIB": trusted_send_lib,

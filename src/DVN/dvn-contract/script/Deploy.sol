@@ -16,9 +16,12 @@ contract DeployDVNContract is Script {
         // Active network parameters.
         address endpointAddr = vm.envAddress(string("ENDPOINT"));
 
+        address receiveLibAddr = vm.envAddress(string("TRUSTED_RECEIVE_LIB"));
+
         vm.startBroadcast(deployer);
         LayerZeroDVNContract dvn = new LayerZeroDVNContract(
-            ILayerZeroEndpointV2(endpointAddr)
+            ILayerZeroEndpointV2(endpointAddr),
+            receiveLibAddr
         );
         vm.stopBroadcast();
 

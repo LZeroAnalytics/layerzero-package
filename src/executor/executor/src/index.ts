@@ -1,11 +1,21 @@
 // src/index.ts
 import { config as dotenvConfig } from "dotenv";
 import { createClient } from "redis";
-import {Account, Chain, createWalletClient, defineChain, http, HttpTransport, WalletClient} from "viem";
+import {
+    Account,
+    Chain,
+    createPublicClient,
+    createWalletClient,
+    defineChain,
+    http,
+    HttpTransport,
+    WalletClient
+} from "viem";
 import { chainConfig } from "./config";
 import { privateKeyToAccount } from "viem/accounts";
 import { LayerZeroExecutor } from "./LayerZeroExecutor";
-import { LZMessageEvent } from "./types";
+import { LZRawEvent, LZVerifiedEvent} from "./types";
+import { abi as receiveLibABI } from "./abis/ReceiveUln302";
 
 // Load environment variables
 dotenvConfig();
@@ -28,6 +38,11 @@ const client: WalletClient<HttpTransport, Chain, Account> = createWalletClient({
     account,
 });
 
+const publicClient = createPublicClient({
+    chain: chain,
+    transport: http(process.env.RPC_URL!),
+});
+
 async function main() {
     const executor = new LayerZeroExecutor(chainConfig, client);
     executor.start();
@@ -48,15 +63,41 @@ async function main() {
 
     for (const channel of channels) {
         await redisSub.subscribe(channel, (message) => {
-            console.log(`Executor received event from channel ${channel}:`, message);
+            console.log(`Executor received raw event from channel ${channel}:`, message);
             try {
-                const event: LZMessageEvent = JSON.parse(message);
-                executor.addEvent(event);
+                const event: LZRawEvent = JSON.parse(message);
+                executor.addRawEvent(event);
             } catch (e) {
                 console.error("Failed to parse event:", e);
             }
         });
     }
+
+    publicClient.watchContractEvent({
+        address: chainConfig.trustedReceiveLib,
+        abi: receiveLibABI,
+        eventName: "PayloadVerified",
+        onLogs: async (logs) => {
+            for (const log of logs) {
+                console.log("PayloadVerified event detected: ", log);
+                // Extract event parameters.
+                // The ABI provides: dvn, header, confirmations, proofHash.
+                const header = log.args.header as `0x${string}`;
+                const proofHash = log.args.proofHash as `0x${string}`;
+                const confirmations = log.args.confirmations as bigint;
+
+                // Build an LZMessageEvent object.
+                const eventObj: LZVerifiedEvent = {
+                    type: "verified",
+                    header: header,
+                    confirmations: confirmations,
+                    transactionHash: log.transactionHash,
+                };
+
+                executor.addVerifiedEvent(eventObj);
+            }
+        },
+    });
 
     console.log("LayerZero Executor is now listening for events from Redis...");
     process.stdin.resume();

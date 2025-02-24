@@ -1,5 +1,5 @@
 // src/index.ts
-import { createPublicClient, http } from "viem";
+import {createPublicClient, defineChain, http} from "viem";
 import {mainnet} from "viem/chains";
 import { config as dotenvConfig } from "dotenv";
 import { LayerZeroCommitter, LZMessageEvent } from "./LayerZeroCommitter";
@@ -9,17 +9,29 @@ import { createClient } from "redis";
 dotenvConfig();
 
 async function main() {
+
+    const chain = defineChain({
+        id: Number(process.env.CHAIN_ID!),
+        name: process.env.NAME!,
+        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+            default: {
+                http: [process.env.RPC_URL!],
+            },
+        }
+    });
+
     const client = createPublicClient({
-        chain: mainnet,
+        chain: chain,
         transport: http(process.env.RPC_URL!),
     });
 
     const redisClient = createClient({
-        url: process.env.BROKER_URL || "redis://redis-broker:6379",
+        url: process.env.BROKER_URL!,
     });
     await redisClient.connect();
 
-    const networkName = process.env.NAME || 'layerzero';
+    const networkName = process.env.NAME!;
 
     const committer = new LayerZeroCommitter(client);
 

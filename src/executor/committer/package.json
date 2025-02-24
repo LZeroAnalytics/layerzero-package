@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@layerzerolabs/lz-v2-utilities": "^3.0.70",
     "abitype": "^1.0.8",
     "dotenv": "^16.4.7",
     "redis": "^4.7.0",
