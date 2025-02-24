@@ -15,6 +15,10 @@ import { abi as receiveLibABI } from "./abis/ReceiveUln302";
 import { ChainConfig } from "./config";
 import { LZMessageEvent } from "./types";
 
+import {
+    bytes32ToEthAddress, hexZeroPadTo32,
+} from "@layerzerolabs/lz-v2-utilities";
+
 // The ExecutionState is an enum defined by the EndpointV2View contract.
 export enum ExecutionState {
     NotExecutable = 0,
@@ -132,20 +136,14 @@ export class LayerZeroExecutor {
     }
 
     async executeOrRequeueEvent(event: LZMessageEvent) {
-        const executionState = await this.getExecutionState(event);
-        console.log(`Event ${event.transactionHash} execution state: ${executionState}`);
+        //const executionState = await this.getExecutionState(event);
+        //console.log(`Event ${event.transactionHash} execution state: ${executionState}`);
 
-        if (executionState === ExecutionState.Executed) {
-            console.log(`Event ${event.transactionHash} already executed.`);
-            return;
-        }
+        await this.commitEvent(event);
+        await this.executeEvent(event);
+        return;
 
-        if (executionState === ExecutionState.Executable) {
-            await this.executeEvent(event);
-            return;
-        }
-
-        const verificationState = await this.getVerificationState(event);
+        /*const verificationState = await this.getVerificationState(event);
         if (verificationState === VerificationState.Verifiable) {
             await this.commitEvent(event);
             this.pendingEvents.push(event);
@@ -160,28 +158,51 @@ export class LayerZeroExecutor {
 
         console.log(`Event ${event.transactionHash} not committable yet, requeuing.`);
         this.pendingEvents.push(event);
+
+         */
     }
+
+    /*
+    curl -X POST https://781cbbb48cf94684a60163c6edb59b5e-rpc.dev.lzeroanalytics.com \
+-H "Content-Type: application/json" \
+-d '{
+  "jsonrpc": "2.0",
+  "method": "debug_traceTransaction",
+  "params": ["0xcd9fbafd96ae48da44b333dfaa392f48049104b1fd360d414a9872f9f19f145f", {}],
+  "id": 1
+}'
+
+curl -X POST https://781cbbb48cf94684a60163c6edb59b5e-rpc.dev.lzeroanalytics.com \
+-H "Content-Type: application/json" \
+-d '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0xcd9fbafd96ae48da44b333dfaa392f48049104b1fd360d414a9872f9f19f145f"],"id":1}'
+
+
+     */
 
     async executeEvent(event: LZMessageEvent) {
         console.log(`Executing event ${event.transactionHash}`);
-        const res = await this.endpointContract.write.lzReceive(
-            [
-                {
-                    srcEid: Number(event.packet.srcEid),
-                    sender: padHex(event.packet.sender as `0x${string}`),
-                    nonce: BigInt(event.packet.nonce),
-                },
-                event.packet.receiver as `0x${string}`,
-                padHex(event.packet.guid as `0x${string}`),
-                event.packet.message as `0x${string}`,
-                "0x" // extra data
-            ],
+        const origin = {
+            srcEid: Number(event.packet.srcEid),
+            sender: padHex(event.packet.sender),
+            nonce: BigInt(event.packet.nonce),
+        };
+        const receiver = bytes32ToEthAddress(event.packet.receiver) as `0x${string}`;
+        const guid = hexZeroPadTo32(event.packet.guid) as `0x${string}`;
+        const message = event.packet.message;
+        const extraData = "0x";
+
+        const tx = await this.endpointContract.write.lzReceive(
+            [origin,
+            receiver,
+            guid,
+            message,
+            extraData],
             {
                 gas: BigInt(DEFAULT_GAS_LIMIT),
                 account: this.client.account,
             }
         );
-        console.log(`Executed event: ${res}`);
+        console.log(`Executed event: ${tx}`);
     }
 
     async commitEvent(event: LZMessageEvent) {
@@ -197,10 +218,11 @@ export class LayerZeroExecutor {
     }
 
     async getExecutionState(event: LZMessageEvent): Promise<ExecutionState> {
+        console.log("Running executable", event.packet.srcEid, padHex(event.packet.sender), BigInt(event.packet.nonce), event.packet.receiver as `0x${string}`);
         const state: number = await this.endpointViewContract.read.executable([
             {
                 srcEid: event.packet.srcEid,
-                sender: padHex(event.packet.sender as `0x${string}`) ,
+                sender: padHex(event.packet.sender),
                 nonce: BigInt(event.packet.nonce),
             },
             event.packet.receiver as `0x${string}`,
@@ -209,10 +231,10 @@ export class LayerZeroExecutor {
     }
 
     async getVerificationState(event: LZMessageEvent): Promise<VerificationState> {
-        const state: number = await this.receiveLibViewContract.read.verifiable([
+        const state: number = (await this.receiveLibViewContract.read.verifiable([
             event.packetHeader,
             event.payloadHash,
-        ]);
+        ])) as number;
         return state;
     }
 }

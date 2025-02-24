@@ -1,6 +1,7 @@
 def add_executor(
         plan,
         name,
+        chain_id,
         rpc_url,
         endpoint,
         endpoint_view,
@@ -10,7 +11,8 @@ def add_executor(
         eid,
         executor,
         private_key,
-        broker_url
+        broker_url,
+        committer_channels,
 ):
     service = plan.add_service(
         name = "{}-executor".format(name),
@@ -21,6 +23,7 @@ def add_executor(
             cmd = [],
             env_vars = {
                 "NAME": name,
+                "CHAIN_ID": chain_id,
                 "RPC_URL": rpc_url,
                 "ENDPOINT": endpoint,
                 "ENDPOINT_VIEW": endpoint_view,
@@ -31,6 +34,7 @@ def add_executor(
                 "EXECUTOR": executor,
                 "PRIVATE_KEY": private_key,
                 "BROKER_URL": broker_url,
+                "COMMITTER_CHANNELS": committer_channels,
             },
         ),
         description = "LayerZero Executor that subscribes to events from Redis",

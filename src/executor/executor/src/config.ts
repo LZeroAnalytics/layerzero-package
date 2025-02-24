@@ -5,6 +5,7 @@ configDotenv();
 export interface ChainConfig {
     name: string;
     rpc: string;
+    chainId: number,
     endpoint: `0x${string}`;
     endpointView: `0x${string}`;
     trustedSendLib: `0x${string}`;
@@ -15,7 +16,8 @@ export interface ChainConfig {
 }
 
 export const chainConfig: ChainConfig = {
-    name: process.env.CHAIN_NAME || "local",
+    name: process.env.NAME || "local",
+    chainId: Number(process.env.CHAIN_ID) || 1,
     rpc: process.env.RPC_URL || "http://127.0.0.1:8545",
     endpoint: process.env.ENDPOINT as `0x${string}`,
     endpointView: process.env.ENDPOINT_VIEW as `0x${string}`,

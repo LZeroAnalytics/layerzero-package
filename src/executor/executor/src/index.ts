@@ -1,8 +1,7 @@
 // src/index.ts
 import { config as dotenvConfig } from "dotenv";
 import { createClient } from "redis";
-import {Account, Chain, createWalletClient, http, HttpTransport, WalletClient} from "viem";
-import { mainnet } from "viem/chains";
+import {Account, Chain, createWalletClient, defineChain, http, HttpTransport, WalletClient} from "viem";
 import { chainConfig } from "./config";
 import { privateKeyToAccount } from "viem/accounts";
 import { LayerZeroExecutor } from "./LayerZeroExecutor";
@@ -13,8 +12,18 @@ dotenvConfig();
 
 // Create a wallet client for the chain defined in config
 const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
+const chain = defineChain({
+    id: chainConfig.chainId,
+    name: chainConfig.name,
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: {
+        default: {
+            http: [chainConfig.rpc],
+        },
+    }
+});
 const client: WalletClient<HttpTransport, Chain, Account> = createWalletClient({
-    chain: mainnet,
+    chain: chain,
     transport: http(chainConfig.rpc),
     account,
 });
@@ -24,22 +33,30 @@ async function main() {
     executor.start();
 
     const redisSub = createClient({
-        url: process.env.BROKER_URL || "redis://redis-broker:6379",
+        url: process.env.BROKER_URL!,
     });
     await redisSub.connect();
 
-    const networkName = process.env.NAME || 'layerzero';
+    const channels = process.env.COMMITTER_CHANNELS
+        ? process.env.COMMITTER_CHANNELS.split(",").map(ch => ch.trim())
+        : [];
 
-    // Subscribe to the Redis channel used by the committer.
-    await redisSub.subscribe(networkName, (message) => {
-        console.log("Executor received event from broker:", message);
-        try {
-            const event: LZMessageEvent = JSON.parse(message);
-            executor.addEvent(event);
-        } catch (e) {
-            console.error("Failed to parse event:", e);
-        }
-    });
+    if (channels.length === 0) {
+        console.error("No committer channels specified. Please set COMMITTER_CHANNELS in your env.");
+        process.exit(1);
+    }
+
+    for (const channel of channels) {
+        await redisSub.subscribe(channel, (message) => {
+            console.log(`Executor received event from channel ${channel}:`, message);
+            try {
+                const event: LZMessageEvent = JSON.parse(message);
+                executor.addEvent(event);
+            } catch (e) {
+                console.error("Failed to parse event:", e);
+            }
+        });
+    }
 
     console.log("LayerZero Executor is now listening for events from Redis...");
     process.stdin.resume();
