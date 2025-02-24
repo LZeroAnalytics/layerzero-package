@@ -1,0 +1,40 @@
+def add_dvn(
+        plan,
+        name,
+        chain_id,
+        rpc_url,
+        endpoint,
+        endpoint_view,
+        trusted_send_lib,
+        trusted_receive_lib,
+        trusted_receive_lib_view,
+        eid,
+        private_key,
+        broker_url,
+        committer_channels,
+):
+    service = plan.add_service(
+        name = "{}-dvn".format(name),
+        config = ServiceConfig(
+            image = "tiljordan/layerzero-dvn:v1.0.0",
+            ports = {},
+            entrypoint = ["node", "dist/index.js"],
+            cmd = [],
+            env_vars = {
+                "NAME": name,
+                "CHAIN_ID": chain_id,
+                "RPC_URL": rpc_url,
+                "ENDPOINT": endpoint,
+                "ENDPOINT_VIEW": endpoint_view,
+                "TRUSTED_SEND_LIB": trusted_send_lib,
+                "TRUSTED_RECEIVE_LIB": trusted_receive_lib,
+                "TRUSTED_RECEIVE_LIB_VIEW": trusted_receive_lib_view,
+                "EID": eid,
+                "DVN_PRIVATE_KEY": private_key,
+                "BROKER_URL": broker_url,
+                "COMMITTER_CHANNELS": committer_channels,
+            },
+        ),
+        description = "LayerZero DVN that subscribes to events from Redis",
+    )
+    return service
