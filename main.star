@@ -98,3 +98,8 @@ def run(plan, args):
         )
 
         index = index + 1
+
+    return struct(
+        dvn_addresses = dvn_addresses,
+        executor_addresses = executor_addresses,
+    )
