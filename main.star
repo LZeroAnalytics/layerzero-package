@@ -4,6 +4,7 @@ executor_deployer = import_module("./src/executor/executor_launcher.star")
 messagelib_deployer = import_module("./src/messagelib/contract_deployer.star")
 dvn_contract_deployer = import_module("./src/DVN/contract_deployer.star")
 dvn_deployer = import_module("./src/DVN/dvn_launcher.star")
+address_server = import_module("./src/address-server/server_launcher.star")
 redis = import_module("github.com/kurtosis-tech/redis-package/main.star")
 
 def run(plan, args):
@@ -98,6 +99,9 @@ def run(plan, args):
         )
 
         index = index + 1
+
+    # Add server to serve addresses
+    address_server.add_server(plan, dvn_addresses, executor_addresses)
 
     return struct(
         dvn_addresses = dvn_addresses,
