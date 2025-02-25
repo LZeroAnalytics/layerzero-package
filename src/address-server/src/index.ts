@@ -7,8 +7,8 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 
 // Read the env variables and convert them to arrays (trim any extra spaces)
-const dvnAddresses: string[] = process.env.DVN_ADRESSES
-    ? process.env.DVN_ADRESSES.split(',').map(addr => addr.trim())
+const dvnAddresses: string[] = process.env.DVN_ADDRESSES
+    ? process.env.DVN_ADDRESSES.split(',').map(addr => addr.trim())
     : [];
 
 const executorAddresses: string[] = process.env.EXECUTOR_ADDRESSES
