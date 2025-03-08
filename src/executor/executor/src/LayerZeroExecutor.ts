@@ -10,7 +10,7 @@ import {
 import { abi as endpointABI } from "./abis/EndpointV2";
 import { abi as receiveLibABI } from "./abis/ReceiveUln302";
 import { ChainConfig } from "./config";
-import {LZMessageEvent, LZRawEvent, LZVerifiedEvent} from "./types";
+import { LZRawEvent, LZVerifiedEvent} from "./types";
 import { bytes32ToEthAddress, hexZeroPadTo32 } from "@layerzerolabs/lz-v2-utilities";
 
 const DEFAULT_GAS_LIMIT = 1_000_000;

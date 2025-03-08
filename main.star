@@ -6,18 +6,20 @@ dvn_contract_deployer = import_module("./src/DVN/contract_deployer.star")
 dvn_deployer = import_module("./src/DVN/dvn_launcher.star")
 address_server = import_module("./src/address-server/server_launcher.star")
 redis = import_module("github.com/kurtosis-tech/redis-package/main.star")
+input_parser = import_module("./src/package_io/input_parser.star")
 
 def run(plan, args):
 
-    # Deploy MessageLib
-    #messagelib_deployer.deploy_contract(plan, args["networks"])
+    # Check input params
+    networks = input_parser.input_parser(plan, args)
 
     # Deploy DVN contract
-    dvn_addresses = dvn_contract_deployer.deploy_contract(plan, args["networks"])
+    dvn_addresses = dvn_contract_deployer.deploy_contract(plan, networks)
 
     # Deploy the Executor contract to all networks
-    executor_addresses = executor_contract_deployer.deploy_contract(plan, args["networks"])
-    # Start a single Redis broker for committer/executor communication
+    executor_addresses = executor_contract_deployer.deploy_contract(plan, networks)
+
+    # Start a Redis broker for committer/executor communication
     redis_output = redis.run(
         plan,
         service_name = "broker-redis",
@@ -28,7 +30,7 @@ def run(plan, args):
 
     # For each network, launch a committer, executor, and DVN
     index = 0
-    for net in args["networks"]:
+    for net in networks:
         name = net["name"]
         chain_id = net["chain_id"]
         rpc_url = net["rpc"]
@@ -37,7 +39,7 @@ def run(plan, args):
         trusted_send_lib = net["trusted_send_lib"]
         trusted_receive_lib = net["trusted_receive_lib"]
         trusted_receive_lib_view = net["trusted_receive_lib_view"]
-        eid = net["eid"]  # e.g. "30101"
+        eid = net["eid"]
         executor_addr = executor_addresses[index]
         dvn_addr = dvn_addresses[index]
         private_key = net["private_key"]
@@ -57,7 +59,7 @@ def run(plan, args):
         )
 
         other_names = []
-        for other_net in args["networks"]:
+        for other_net in networks:
             if other_net["name"] != name:
                 other_names.append(other_net["name"])
         committer_channels = ",".join(other_names)

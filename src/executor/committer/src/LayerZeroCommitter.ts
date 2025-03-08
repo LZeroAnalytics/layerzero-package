@@ -1,10 +1,10 @@
 // src/LayerZeroCommitter.ts
 import {decodeAbiParameters, HttpTransport, PublicClient} from "viem";
-import { Chain } from "viem/chains";
-import { chainConfig } from "./config";
+import {Chain} from "viem/chains";
+import {chainConfig} from "./config";
 import {abi as endpointABI} from "./abis/EndpointV2";
 import {config as dotenvConfig} from "dotenv";
-import { Packet, PacketV1Codec } from "@layerzerolabs/lz-v2-utilities";
+import {Packet, PacketV1Codec} from "@layerzerolabs/lz-v2-utilities";
 
 dotenvConfig();
 
@@ -40,7 +40,7 @@ export class LayerZeroCommitter {
      * @returns A function that can be called to stop watching.
      */
     start(onEvent: OnEvent): () => void {
-        const stop = this.client.watchContractEvent({
+        return this.client.watchContractEvent({
             address: chainConfig.endpoint,
             abi: endpointABI,
             eventName: "PacketSent",
@@ -54,7 +54,6 @@ export class LayerZeroCommitter {
                 }
             }
         });
-        return stop;
     }
 
     /**
@@ -122,15 +121,13 @@ export class LayerZeroCommitter {
             if (packet.srcEid != chainConfig.eid) continue; // This should not be possible.
 
             console.log(`Log valid for tx: ${log.transactionHash}!`);
-            const event: LZMessageEvent = {
+            return {
                 packet: packet,
                 packetHeader: packetHeader,
                 payloadHash: payloadHash,
                 rawPayload: payLoad,
                 transactionHash: log.transactionHash,
             };
-
-            return event;
         }
     }
 }
