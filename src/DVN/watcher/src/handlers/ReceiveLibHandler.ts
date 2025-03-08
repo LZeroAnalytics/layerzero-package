@@ -51,6 +51,7 @@ export class ReceiveLibHandler {
         // Publish a verification message to Redis so that it can be matched with the PacketSent event later
         const verificationMessage = {
             key,
+            packetEvent,
             libraryAddress,
             receiver,
             dstEid,
