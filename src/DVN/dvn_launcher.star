@@ -16,9 +16,9 @@ def add_dvn(
         redis_url,
 ):
     watcher = plan.add_service(
-        name = "watcher-{}-{}".format(src_name, dst_name),
+        name = "dvn-watcher-{}-{}".format(src_name, dst_name),
         config = ServiceConfig(
-            image = "tiljordan/layerzero-watcher:v1.0.0",
+            image = "tiljordan/layerzero-dvn-watcher:v1.0.0",
             ports = {},
             entrypoint = ["node", "dist/index.js"],
             cmd = [],
@@ -36,11 +36,11 @@ def add_dvn(
                 "REDIS_URL": redis_url,
             },
         ),
-        description = "Adding watcher for channel {} -> {}".format(src_name, dst_name)
+        description = "Adding DVN watcher for channel {} -> {}".format(src_name, dst_name)
     )
 
     verifier = plan.add_service(
-        name = "verifier-{}-{}".format(src_name, dst_name),
+        name = "dvn-verifier-{}-{}".format(src_name, dst_name),
         config = ServiceConfig(
             image = "tiljordan/layerzero-verifier:v1.0.0",
             ports = {},

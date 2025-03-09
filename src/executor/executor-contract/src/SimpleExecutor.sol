@@ -9,9 +9,11 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SimpleExecutor is Ownable, ILayerZeroExecutor {
     event Withdraw(ISendLib indexed lib, address to, uint256 amount);
+    event JobAssigned(address indexed executor, bytes32 indexed key, uint256 fee);
     event MessageFeeSet(uint32 indexed dstEid, uint256 messageFee);
 
     mapping(uint32 => uint256) public messageFees;
+    mapping(bytes32 => uint256) public assignedJobs;
 
     ILayerZeroEndpointV2 public immutable endpoint;
 
@@ -41,8 +43,18 @@ contract SimpleExecutor is Ownable, ILayerZeroExecutor {
         address sender,
         uint256 calldataSize,
         bytes calldata options
-    ) external view override returns (uint256 price) {
-        return getFee(dstEid, sender, calldataSize, options);
+    ) external override returns (uint256 price) {
+        // Only the endpoint can call this function.
+        require(msg.sender == address(endpoint), "Caller must be endpoint");
+
+        uint256 requiredFee = messageFees[dstEid];
+        require(requiredFee > 0, "SimpleExecutor: invalid destination");
+
+        price = requiredFee;
+        bytes32 key = keccak256(abi.encodePacked(dstEid, sender, calldataSize));
+        assignedJobs[key] = requiredFee;
+        emit JobAssigned(msg.sender, key, requiredFee);
+        return requiredFee;
     }
 
     // @notice query the executor price for relaying the payload and its proof to the destination chain

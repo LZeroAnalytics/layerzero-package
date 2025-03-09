@@ -3,7 +3,7 @@ import { config as dotenvConfig } from "dotenv";
 import { createClient, RedisClientType } from "redis";
 import { PacketSentWatcher } from "./watchers/PacketSentWatcher";
 import { JobAssignedWatcher } from "./watchers/JobAssignedWatcher";
-import { ReceiveLibHandler } from "./handlers/ReceiveLibHandler";
+import {PayloadVerifiedHandler} from "./handlers/PayloadVerifiedHandler";
 import {destinationConfig, sourceConfig} from "./config";
 
 dotenvConfig();
@@ -49,12 +49,14 @@ async function main() {
 
     const packetSentWatcher = new PacketSentWatcher(sourceClient, redisClient);
     const jobAssignedWatcher = new JobAssignedWatcher(sourceClient, redisClient);
-    const receiveLibHandler = new ReceiveLibHandler(destinationClient, redisClient);
+    const payloadVerifiedHandler = new PayloadVerifiedHandler(destinationClient, redisClient);
+    const packetVerifiedHandler = new PayloadVerifiedHandler(destinationClient, redisClient);
 
     // Start the components for handling each step of the workflow
     packetSentWatcher.start();
     jobAssignedWatcher.start();
-    receiveLibHandler.start();
+    payloadVerifiedHandler.start();
+    packetSentWatcher.start();
 
     console.log("All event handlers started. Listening for events...");
     process.stdin.resume();

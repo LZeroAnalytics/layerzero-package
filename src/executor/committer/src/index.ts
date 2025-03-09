@@ -1,52 +1,43 @@
-// src/index.ts
-import {createPublicClient, defineChain, http} from "viem";
-import {mainnet} from "viem/chains";
+import {Account, defineChain, http, HttpTransport, WalletClient, Chain, createWalletClient} from "viem";
 import { config as dotenvConfig } from "dotenv";
-import { LayerZeroCommitter, LZMessageEvent } from "./LayerZeroCommitter";
-import { createClient } from "redis";
+import { LayerZeroCommitter } from "./LayerZeroCommitter";
+import {createClient, RedisClientType} from "redis";
+import {chainConfig} from "./config";
+import {privateKeyToAccount} from "viem/accounts";
 
-// Load environment variables from .env file.
 dotenvConfig();
 
 async function main() {
 
     const chain = defineChain({
-        id: Number(process.env.CHAIN_ID!),
-        name: process.env.NAME!,
+        id: chainConfig.chainId,
+        name: chainConfig.name,
         nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
         rpcUrls: {
             default: {
-                http: [process.env.RPC_URL!],
+                http: [chainConfig.rpc],
             },
         }
     });
 
-    const client = createPublicClient({
-        chain: chain,
-        transport: http(process.env.RPC_URL!),
+    const account = privateKeyToAccount(chainConfig.privateKey);
+
+    const walletClient: WalletClient<HttpTransport, Chain, Account> = createWalletClient({
+        chain,
+        transport: http(chainConfig.rpc),
+        account,
     });
 
-    const redisClient = createClient({
-        url: process.env.BROKER_URL!,
+    const redisClient: RedisClientType<any, any> = createClient({
+        url: process.env.REDIS_URL!,
     });
     await redisClient.connect();
 
-    const networkName = process.env.NAME!;
+    const committer = new LayerZeroCommitter(walletClient, redisClient);
 
-    const committer = new LayerZeroCommitter(client);
+    committer.start();
 
-    // Replace to convert big int to string and using stringify
-    const replacer = (key: string, value: any): any => {
-        return typeof value === 'bigint' ? value.toString() : value;
-    };
-
-    // Start watching for events.
-    const stop = committer.start(async (event: LZMessageEvent) => {
-        console.log("Committer received event:", event.transactionHash);
-        await redisClient.publish(networkName, JSON.stringify(event, replacer));
-    });
-
-    console.log("LayerZero Committer is now listening for events and publishing to Redis...");
+    console.log("LayerZero Committer is now listening for events to commit...");
     process.stdin.resume();
 }
 

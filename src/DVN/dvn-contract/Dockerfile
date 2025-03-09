@@ -9,6 +9,7 @@ WORKDIR /app
 
 # Copy the project files into the container.
 COPY . .
+
 # Ensure the cache directory exists and is writable
 RUN mkdir -p /app/cache && chmod -R 777 /app/cache
 
