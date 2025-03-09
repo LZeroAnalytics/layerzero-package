@@ -5,15 +5,38 @@ REQUIRED_FIELDS = [
     "endpoint",
     "trusted_send_lib",
     "trusted_receive_lib",
-    "endpoint_view",
     "eid",
-    "exec_fee",
     "private_key"
 ]
 
 def input_parser(plan, input_args):
     if "networks" not in input_args:
         fail("Input must contain 'networks' field.")
+
+    if "connections" not in input_args:
+        fail("Input must contain 'connections' field.")
+
+    connections = input_args["connections"]
+    if len(connections) < 1:
+        fail("At least one connection must be specified.")
+
+    for connection in connections:
+        # Check that connection has 'to' and 'from' fields.
+        if "to" not in connection:
+            fail("Connection is missing 'to' field.")
+        if "from" not in connection:
+            fail("Connection is missing 'from' field.")
+        if "exec_fee" not in connection:
+            fail ("Connection is missing 'exec_fee' field")
+        if "dvn_fee" not in connection:
+            fail("Connection is missing 'dvn_fee' field")
+
+        # Validate that the 'to' and 'from' values correspond to a valid network name.
+        valid_network_names = [network["name"] for network in input_args["networks"]]
+        if connection["to"] not in valid_network_names:
+            fail("Connection 'to' field value '%s' does not match any network name." % connection["to"])
+        if connection["from"] not in valid_network_names:
+            fail("Connection 'from' field value '%s' does not match any network name." % connection["from"])
 
     networks = input_args["networks"]
     if len(networks) < 2:
@@ -26,11 +49,6 @@ def input_parser(plan, input_args):
         for field in REQUIRED_FIELDS:
             if field not in network:
                 fail("Network %d is missing required field '%s'." % (idx, field))
-
-        exec_fee_str = network["exec_fee"]
-        if not exec_fee_str.isdigit():
-            fail("Network %d: 'exec_fee' must be an integer value represented as a string." % idx)
-        exec_fee = int(exec_fee_str)
 
         # Validate RPC connectivity and chain id
         rpc_url = network["rpc"]
@@ -61,14 +79,10 @@ def input_parser(plan, input_args):
             chain_id = network["chain_id"],
             rpc = network["rpc"],
             endpoint = network["endpoint"],
-            endpoint_view = network["endpoint_view"],
             trusted_send_lib = network["trusted_send_lib"],
             trusted_receive_lib = network["trusted_receive_lib"],
             eid = network["eid"],
-            exec_fee = exec_fee,
             private_key = network["private_key"]
         ))
 
-    return struct(
-        networks = parsed_networks
-    )
+    return parsed_networks

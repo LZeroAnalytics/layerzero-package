@@ -2,6 +2,7 @@ import { PublicClient } from "viem";
 import { RedisClientType } from "redis";
 import { destinationConfig } from "../config";
 import { abi as endpointABI } from "../abis/EndpointV2";
+import { abi as sendUlnABI } from "../abis/SendUln302";
 
 export class ReceiveLibHandler {
     constructor(
@@ -40,13 +41,17 @@ export class ReceiveLibHandler {
         const libraryAddress = (Array.isArray(result) ? result[0] : result) as string;
         console.log(`Receive library address obtained: ${libraryAddress}`);
 
-        // Get the confirmations required from the receive library configuration
-        const confirmations = await this.getConfirmationsRequired(libraryAddress);
-        console.log(`Confirmations required: ${confirmations}`);
-        console.log(`Waiting for ${confirmations} confirmations...`);
+        // Get the full ULN config from the send library
+        const ulnConfig = await this.getUlnConfig(libraryAddress, receiver, dstEid);
+        if (!ulnConfig) {
+            console.error("Failed to retrieve ULN config");
+            return;
+        }
+        console.log("ULN Config retrieved:", ulnConfig);
+        console.log(`Waiting for ${ulnConfig.confirmations} confirmations...`);
 
         // Wait for the required confirmations
-        await this.waitConfirmations(confirmations);
+        await this.waitConfirmations(Number(ulnConfig.confirmations));
 
         // Publish a verification message to Redis so that it can be matched with the PacketSent event later
         const verificationMessage = {
@@ -55,6 +60,7 @@ export class ReceiveLibHandler {
             libraryAddress,
             receiver,
             dstEid,
+            ulnConfig,
             status: "confirmed",
             timestamp: new Date().toISOString()
         };
@@ -62,28 +68,18 @@ export class ReceiveLibHandler {
         console.log("Verification message published to Redis for key:", key);
     }
 
-    private async getConfirmationsRequired(libraryAddress: string): Promise<number> {
-        const abi = [
-            {
-                constant: true,
-                inputs: [],
-                name: "confirmationsRequired",
-                outputs: [{ name: "", type: "uint256" }],
-                stateMutability: "view",
-                type: "function"
-            }
-        ];
+    private async getUlnConfig(libraryAddress: string, receiver: string, dstEid: number): Promise<any> {
         try {
-            const confirmations = await this.client.readContract({
+            const config = await this.client.readContract({
                 address: libraryAddress as `0x${string}`,
-                abi,
-                functionName: "confirmationsRequired",
-                args: []
+                abi: sendUlnABI,
+                functionName: "getUlnConfig",
+                args: [receiver as `0x${string}`, dstEid]
             });
-            return Number(confirmations);
+            return config;
         } catch (error) {
-            console.error("Error reading confirmations required from receive library:", error);
-            return 0;
+            console.error("Error reading ULN config from send library:", error);
+            return null;
         }
     }
 

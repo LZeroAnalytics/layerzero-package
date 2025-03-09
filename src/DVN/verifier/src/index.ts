@@ -15,10 +15,9 @@ import { chainConfig } from "./config";
 import { Verifier } from "./Verifier";
 import {createClient, RedisClientType} from "redis";
 
-
 dotenvConfig();
 
-const dvnPrivateKey = process.env.DVN_PRIVATE_KEY as `0x${string}`;
+const dvnPrivateKey = chainConfig.privateKey as `0x${string}`;
 const account = privateKeyToAccount(dvnPrivateKey);
 
 const chain = defineChain({
@@ -44,14 +43,14 @@ const publicClient: PublicClient = createPublicClient({
 });
 
 const redisClient: RedisClientType<any, any> = createClient({
-    url: process.env.BROKER_URL!,
+    url: process.env.REDIS_URL!,
 });
 
 async function startVerifier() {
     await redisClient.connect();
 
     const verifier = new Verifier(walletClient, publicClient, redisClient);
-    // Start the verifier service (assumes a start method exists on the Verifier class)
+    // Start the verifier service
     verifier.start();
 }
 

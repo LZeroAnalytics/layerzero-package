@@ -2,6 +2,7 @@ import { WalletClient, PublicClient, HttpTransport, Chain, Account } from "viem"
 import { RedisClientType } from "redis";
 import { chainConfig } from "./config";
 import { keccak256 } from "viem";
+import { abi as receiveUlnABI } from "./abis/ReceiveUln302";
 
 export class Verifier {
     constructor(
@@ -36,38 +37,20 @@ export class Verifier {
             return;
         }
 
-        const packetEvent = verification.packetEvent;
-        const { packetHeader, payloadHash } = packetEvent;
-        if (!packetHeader || !payloadHash) {
+        const { packetEvent, libraryAddress, ulnConfig } = verification;
+        if (!packetEvent || !packetEvent.packetHeader || !packetEvent.payloadHash) {
             console.log("Missing packetHeader or payloadHash in PacketSent event");
             return;
         }
 
         // Compute headerHash from packetHeader using keccak256
-        const headerHash = keccak256(packetHeader);
+        const headerHash = keccak256(packetEvent.packetHeader);
 
-        // Use required confirmations from the verification event, defaulting to 1 if not provided
-        const requiredConfirmation = verification.confirmations || 1;
-
-        // Call _verified on the receive library contract
         let verified: boolean = await this.publicClient.readContract({
-            address: verification.libraryAddress as `0x${string}`,
-            abi: [
-                {
-                    inputs: [
-                        { internalType: "address", name: "_dvn", type: "address" },
-                        { internalType: "bytes32", name: "_headerHash", type: "bytes32" },
-                        { internalType: "bytes32", name: "_payloadHash", type: "bytes32" },
-                        { internalType: "uint256", name: "_requiredConfirmation", type: "uint256" }
-                    ],
-                    name: "_verified",
-                    outputs: [{ internalType: "bool", name: "", type: "bool" }],
-                    stateMutability: "view",
-                    type: "function"
-                }
-            ],
-            functionName: "_verified",
-            args: [chainConfig.dvn, headerHash, payloadHash, requiredConfirmation]
+            address: libraryAddress as `0x${string}`,
+            abi: receiveUlnABI,
+            functionName: "verifiable",
+            args: [ulnConfig, headerHash, packetEvent.payloadHash]
         });
         console.log(`_verified returned: ${verified}`);
 
@@ -90,29 +73,16 @@ export class Verifier {
                     }
                 ],
                 functionName: "verifyPacket",
-                args: [packetHeader, payloadHash, requiredConfirmation]
+                args: [packetEvent.packetHeader, packetEvent.payloadHash, ulnConfig.confirmations]
             });
             console.log("verifyPacket transaction sent:", txResult);
 
             // Call _verified again after calling verifyPacket
             verified = await this.publicClient.readContract({
-                address: verification.libraryAddress as `0x${string}`,
-                abi: [
-                    {
-                        inputs: [
-                            { internalType: "address", name: "_dvn", type: "address" },
-                            { internalType: "bytes32", name: "_headerHash", type: "bytes32" },
-                            { internalType: "bytes32", name: "_payloadHash", type: "bytes32" },
-                            { internalType: "uint256", name: "_requiredConfirmation", type: "uint256" }
-                        ],
-                        name: "_verified",
-                        outputs: [{ internalType: "bool", name: "", type: "bool" }],
-                        stateMutability: "view",
-                        type: "function"
-                    }
-                ],
-                functionName: "_verified",
-                args: [chainConfig.dvn, headerHash, payloadHash, requiredConfirmation]
+                address: libraryAddress as `0x${string}`,
+                abi: receiveUlnABI,
+                functionName: "verifiable",
+                args: [ulnConfig, headerHash, packetEvent.payloadHash]
             });
             console.log(`_verified after verifyPacket returned: ${verified}`);
             if (!verified) {

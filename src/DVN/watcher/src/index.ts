@@ -4,36 +4,53 @@ import { createClient, RedisClientType } from "redis";
 import { PacketSentWatcher } from "./watchers/PacketSentWatcher";
 import { JobAssignedWatcher } from "./watchers/JobAssignedWatcher";
 import { ReceiveLibHandler } from "./handlers/ReceiveLibHandler";
+import {destinationConfig, sourceConfig} from "./config";
 
 // Load environment variables from .env file.
 dotenvConfig();
 
 async function main() {
 
-    const chain = defineChain({
-        id: Number(process.env.CHAIN_ID!),
-        name: process.env.NAME!,
+    const sourceChain = defineChain({
+        id: Number(sourceConfig.chainId),
+        name: sourceConfig.name,
         nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
         rpcUrls: {
             default: {
-                http: [process.env.RPC_URL!],
+                http: [sourceConfig.rpc],
             },
         }
     });
 
-    const client = createPublicClient({
-        chain: chain,
-        transport: http(process.env.RPC_URL!),
+    const destinationChain = defineChain({
+        id: Number(destinationConfig.chainId),
+        name: destinationConfig.name,
+        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+            default: {
+                http: [destinationConfig.rpc],
+            },
+        }
+    });
+
+    const sourceClient = createPublicClient({
+        chain: sourceChain,
+        transport: http(sourceConfig.rpc),
+    });
+
+    const destinationClient = createPublicClient({
+        chain: destinationChain,
+        transport: http(destinationConfig.rpc),
     });
 
     const redisClient: RedisClientType<any, any> = createClient({
-        url: process.env.BROKER_URL!,
+        url: process.env.REDIS_URL!,
     });
     await redisClient.connect();
 
-    const packetSentWatcher = new PacketSentWatcher(client, redisClient);
-    const jobAssignedWatcher = new JobAssignedWatcher(client, redisClient);
-    const receiveLibHandler = new ReceiveLibHandler(client, redisClient);
+    const packetSentWatcher = new PacketSentWatcher(sourceClient, redisClient);
+    const jobAssignedWatcher = new JobAssignedWatcher(sourceClient, redisClient);
+    const receiveLibHandler = new ReceiveLibHandler(destinationClient, redisClient);
 
     // Start the components for handling each step of the workflow
     packetSentWatcher.start();

@@ -1,7 +1,5 @@
 executor_contract_deployer = import_module("./src/executor/contract_deployer.star")
-committer_deployer = import_module("./src/executor/committer_launcher.star")
 executor_deployer = import_module("./src/executor/executor_launcher.star")
-messagelib_deployer = import_module("./src/messagelib/contract_deployer.star")
 dvn_contract_deployer = import_module("./src/DVN/contract_deployer.star")
 dvn_deployer = import_module("./src/DVN/dvn_launcher.star")
 address_server = import_module("./src/address-server/server_launcher.star")
@@ -12,12 +10,13 @@ def run(plan, args):
 
     # Check input params
     networks = input_parser.input_parser(plan, args)
+    connections = args["connections"]
 
     # Deploy DVN contract
-    dvn_addresses = dvn_contract_deployer.deploy_contract(plan, networks)
+    dvn_addresses = dvn_contract_deployer.deploy_contract(plan, networks, connections)
 
     # Deploy the Executor contract to all networks
-    executor_addresses = executor_contract_deployer.deploy_contract(plan, networks)
+    executor_addresses = executor_contract_deployer.deploy_contract(plan, networks, connections)
 
     # Start a Redis broker for committer/executor communication
     redis_output = redis.run(
@@ -28,84 +27,42 @@ def run(plan, args):
     redis_url = "redis://{}:{}".format(redis_output.hostname, redis_output.port_number)
     plan.print("Redis broker running at " + redis_url)
 
-    # For each network, launch a committer, executor, and DVN
-    index = 0
-    for net in networks:
-        name = net["name"]
-        chain_id = net["chain_id"]
-        rpc_url = net["rpc"]
-        endpoint = net["endpoint"]
-        endpoint_view = net["endpoint_view"]
-        trusted_send_lib = net["trusted_send_lib"]
-        trusted_receive_lib = net["trusted_receive_lib"]
-        trusted_receive_lib_view = net["trusted_receive_lib_view"]
-        eid = net["eid"]
-        executor_addr = executor_addresses[index]
-        dvn_addr = dvn_addresses[index]
-        private_key = net["private_key"]
+    # Build a mapping from network name to its deployed DVN address.
+    network_dvn_map = {}
+    for i, net in enumerate(networks):
+        network_dvn_map[net.name] = dvn_addresses[i]
 
-        plan.print("Launching committer for network " + name)
-        committer_deployer.launch_committer(
-            plan,
-            name = name,
-            chain_id = chain_id,
-            rpc_url = rpc_url,
-            endpoint = endpoint,
-            trusted_send_lib = trusted_send_lib,
-            executor = executor_addr,
-            eid = eid,
-            private_key = private_key,
-            broker_url = redis_url,
-        )
+    # For each connection, launch a DVN service between the source and destination networks.
+    for conn in connections:
+        src = None
+        dst = None
+        for net in networks:
+            if net.name == conn["from"]:
+                src = net
+            if net.name == conn["to"]:
+                dst = net
 
-        other_names = []
-        for other_net in networks:
-            if other_net["name"] != name:
-                other_names.append(other_net["name"])
-        committer_channels = ",".join(other_names)
-
-        plan.print("Launching executor for network " + name)
-        executor_deployer.add_executor(
-            plan,
-            name = name,
-            chain_id = chain_id,
-            rpc_url = rpc_url,
-            endpoint = endpoint,
-            endpoint_view = endpoint_view,
-            trusted_send_lib = trusted_send_lib,
-            trusted_receive_lib = trusted_receive_lib,
-            trusted_receive_lib_view = trusted_receive_lib_view,
-            eid = eid,
-            executor = executor_addr,
-            private_key = private_key,
-            broker_url = redis_url,
-            committer_channels = committer_channels,
-        )
-
-        plan.print("Launching DVN for network " + name)
         dvn_deployer.add_dvn(
             plan,
-            name = name,
-            chain_id = chain_id,
-            rpc_url = rpc_url,
-            endpoint = endpoint,
-            endpoint_view = endpoint_view,
-            trusted_send_lib = trusted_send_lib,
-            trusted_receive_lib = trusted_receive_lib,
-            trusted_receive_lib_view = trusted_receive_lib_view,
-            eid = eid,
-            dvn = dvn_addr,
-            private_key = private_key,
-            broker_url = redis_url,
-            committer_channels = committer_channels,
+            src_name = src.name,
+            src_chain_id = src.chain_id,
+            src_rpc_url = src.rpc,
+            src_endpoint = src.endpoint,
+            src_trusted_send_lib = src.trusted_send_lib,
+            src_dvn_addr = network_dvn_map[src.name],
+            dst_name = dst.name,
+            dst_chain_id = dst.chain_id,
+            dst_rpc_url = dst.rpc,
+            dst_endpoint = dst.endpoint,
+            dst_trusted_receive_lib = dst.trusted_receive_lib,
+            dst_dvn_addr = network_dvn_map[dst.name],
+            dst_private_key = dst.private_key,
+            redis_url = redis_url,
         )
 
-        index = index + 1
-
-    # Add server to serve addresses
-    address_server.add_server(plan, dvn_addresses, executor_addresses)
+    # Optionally, add server to serve DVN addresses (executor addresses removed)
+    address_server.add_server(plan, dvn_addresses, [])
 
     return struct(
         dvn_addresses = dvn_addresses,
-        executor_addresses = executor_addresses,
     )
