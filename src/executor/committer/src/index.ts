@@ -28,12 +28,15 @@ async function main() {
         account,
     });
 
-    const redisClient: RedisClientType<any, any> = createClient({
+    const redisSubscribeClient: RedisClientType<any, any> = createClient({
         url: process.env.REDIS_URL!,
     });
-    await redisClient.connect();
+    await redisSubscribeClient.connect();
 
-    const committer = new LayerZeroCommitter(walletClient, redisClient);
+    const redisPublishClient: RedisClientType<any, any> = redisSubscribeClient.duplicate();
+    redisPublishClient.connect();
+
+    const committer = new LayerZeroCommitter(walletClient, redisSubscribeClient, redisPublishClient);
 
     committer.start();
 

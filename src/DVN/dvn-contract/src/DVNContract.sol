@@ -15,10 +15,12 @@ contract LayerZeroDVNContract is Ownable, ILayerZeroDVN {
 
     // The DVN contract will know about the sendMessageLib address.
     address public sendMessageLib;
+    address public receiveMessageLib;
 
-    constructor(ILayerZeroEndpointV2 _endpoint, address _sendMessageLib, uint32[] memory _dstEids, uint256[] memory _fees) Ownable(msg.sender) {
+    constructor(ILayerZeroEndpointV2 _endpoint, address _receiveMessageLib, address _sendMessageLib, uint32[] memory _dstEids, uint256[] memory _fees) Ownable(msg.sender) {
         endpoint = _endpoint;
         sendMessageLib = _sendMessageLib;
+        receiveMessageLib = _receiveMessageLib;
         require(_dstEids.length == _fees.length, "LayerZeroDVNContract: Length mismatch");
         for (uint256 i = 0; i < _dstEids.length; i++) {
             messageFees[_dstEids[i]] = _fees[i];
@@ -66,7 +68,7 @@ contract LayerZeroDVNContract is Ownable, ILayerZeroDVN {
     ) external onlyOwner {
         bytes32 key = keccak256(abi.encodePacked(_packetHeader, _payloadHash));
         require(!verifiedPackets[key], "Packet already verified");
-        IReceiveUlnE2(sendMessageLib).verify(_packetHeader, _payloadHash, _confirmations);
+        IReceiveUlnE2(receiveMessageLib).verify(_packetHeader, _payloadHash, _confirmations);
         verifiedPackets[key] = true;
     }
     function verified(

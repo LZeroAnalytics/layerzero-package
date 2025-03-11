@@ -4,6 +4,7 @@ import { createClient, RedisClientType } from "redis";
 import { PacketSentWatcher } from "./watchers/PacketSentWatcher";
 import {PayloadVerifiedHandler} from "./handlers/PayloadVerifiedHandler";
 import {destinationConfig, sourceConfig} from "./config";
+import {PacketVerifiedHandler} from "./handlers/PacketVerifedHandler";
 
 dotenvConfig();
 
@@ -51,7 +52,7 @@ async function main() {
 
     const packetSentWatcher = new PacketSentWatcher(sourceClient, redisPublishClient);
     const payloadVerifiedHandler = new PayloadVerifiedHandler(destinationClient, redisSubscribeClient, redisPublishClient);
-    const packetVerifiedHandler = new PayloadVerifiedHandler(destinationClient, redisSubscribeClient, redisPublishClient);
+    const packetVerifiedHandler = new PacketVerifiedHandler(destinationClient, redisSubscribeClient, redisPublishClient);
 
     // Start the components for handling each step of the workflow
     packetSentWatcher.start();

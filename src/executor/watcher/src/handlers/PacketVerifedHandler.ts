@@ -1,6 +1,6 @@
 import {RedisClientType} from "redis";
 import {abi as endpointABI} from "../abis/EndpointV2";
-import {PublicClient, keccak256} from "viem";
+import {PublicClient, keccak256, getAddress} from "viem";
 import {destinationConfig} from "../config";
 
 export class PacketVerifiedHandler {
@@ -14,7 +14,7 @@ export class PacketVerifiedHandler {
 
     public async start(): Promise<void> {
         this.redisSubscribeClient.subscribe("packetEvents", async (message: string) => {
-            console.log("Job assignment received:", message);
+            console.log("Packet verified handler received:", message);
 
             const packetData = JSON.parse(message);
 
@@ -28,15 +28,15 @@ export class PacketVerifiedHandler {
     }
 
     private async handlePacketEvent(packetData: any): Promise<void> {
-        const {receiver, dstEid, nonce, sender} = packetData.packet
-        //TODO: Try checksummed address
-        const normalizedReceiver = receiver.length === 66 ? `0x${receiver.slice(-40)}` : receiver;
+        const {receiver, srcEid, nonce, sender} = packetData.packet
+        const normalizedReceiver = getAddress(receiver.length === 66 ? `0x${receiver.slice(-40)}` : receiver);
         try {
             this.client.watchContractEvent({
                 address: destinationConfig.endpoint,
                 abi: endpointABI,
                 eventName: "PacketVerified",
                 onLogs: async (logs) => {
+                    console.log("Received Packet verified event:", logs);
                     // Define constants for payload hash values
                     const EMPTY_PAYLOAD_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000';
                     // Compute NIL_PAYLOAD_HASH as keccak256 hash of 'NIL_PAYLOAD'.
@@ -48,7 +48,7 @@ export class PacketVerifiedHandler {
                         address: destinationConfig.endpoint,
                         abi: endpointABI,
                         functionName: 'inboundPayloadHash',
-                    args: [normalizedReceiver, dstEid, sender, nonce]
+                    args: [normalizedReceiver, srcEid, sender, nonce]
                     });
 
                     let isExecutable = false;
@@ -59,7 +59,7 @@ export class PacketVerifiedHandler {
                             address: destinationConfig.endpoint,
                             abi: endpointABI,
                             functionName: 'lazyInboundNonce',
-                        args: [normalizedReceiver, dstEid, sender]
+                        args: [normalizedReceiver, srcEid, sender]
                         });
                         if (nonce <= Number(lazyInboundNonce)) {
                             isExecutable = true;
@@ -72,7 +72,7 @@ export class PacketVerifiedHandler {
                             address: destinationConfig.endpoint,
                             abi: endpointABI,
                             functionName: 'inboundNonce',
-                        args: [normalizedReceiver, dstEid, sender]
+                        args: [normalizedReceiver, srcEid, sender]
                         });
                         if (nonce <= Number(inboundNonce)) {
                             isExecutable = true;
@@ -83,10 +83,11 @@ export class PacketVerifiedHandler {
                         const executionMessage = {
                             packetData,
                             receiver: normalizedReceiver,
-                            dstEid,
+                            srcEid,
                             status: "executable",
                             timestamp: new Date().toISOString()
                         };
+                        console.log("Executing message:", executionMessage);
                         await this.redisPublishClient.publish("execution", JSON.stringify(executionMessage));
                     }
                 },

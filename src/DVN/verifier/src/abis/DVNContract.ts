@@ -8,7 +8,12 @@ export const abi = [
                 "internalType": "contract ILayerZeroEndpointV2"
             },
             {
-                "name": "_receiveLib",
+                "name": "_receiveMessageLib",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "_sendMessageLib",
                 "type": "address",
                 "internalType": "address"
             },
@@ -75,25 +80,6 @@ export const abi = [
             }
         ],
         "stateMutability": "payable"
-    },
-    {
-        "type": "function",
-        "name": "assignedJobs",
-        "inputs": [
-            {
-                "name": "",
-                "type": "bytes32",
-                "internalType": "bytes32"
-            }
-        ],
-        "outputs": [
-            {
-                "name": "",
-                "type": "uint256",
-                "internalType": "uint256"
-            }
-        ],
-        "stateMutability": "view"
     },
     {
         "type": "function",
@@ -176,7 +162,7 @@ export const abi = [
     },
     {
         "type": "function",
-        "name": "receiveLib",
+        "name": "receiveMessageLib",
         "inputs": [],
         "outputs": [
             {
@@ -193,6 +179,19 @@ export const abi = [
         "inputs": [],
         "outputs": [],
         "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "sendMessageLib",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "stateMutability": "view"
     },
     {
         "type": "function",
@@ -290,31 +289,6 @@ export const abi = [
         ],
         "outputs": [],
         "stateMutability": "nonpayable"
-    },
-    {
-        "type": "event",
-        "name": "JobAssigned",
-        "inputs": [
-            {
-                "name": "dvn",
-                "type": "address",
-                "indexed": true,
-                "internalType": "address"
-            },
-            {
-                "name": "key",
-                "type": "bytes32",
-                "indexed": true,
-                "internalType": "bytes32"
-            },
-            {
-                "name": "fee",
-                "type": "uint256",
-                "indexed": false,
-                "internalType": "uint256"
-            }
-        ],
-        "anonymous": false
     },
     {
         "type": "event",

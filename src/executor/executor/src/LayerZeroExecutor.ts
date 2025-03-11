@@ -49,6 +49,6 @@ export class LayerZeroExecutor {
             args: [origin, receiver, guid, message, extraData],
         });
 
-        console.log("Commit verification submitted:", txResult)
+        console.log("Execution submitted:", txResult)
     }
 }

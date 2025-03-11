@@ -1,8 +1,8 @@
-import { PublicClient } from "viem";
+import {getAddress, PublicClient} from "viem";
 import { RedisClientType } from "redis";
 import { destinationConfig } from "../config";
 import { abi as endpointABI } from "../abis/EndpointV2";
-import { abi as sendUlnABI } from "../abis/SendUln302";
+import { abi as receiveUlnAbi } from "../abis/ReceiveUln302";
 
 export class ReceiveLibHandler {
     constructor(
@@ -30,11 +30,10 @@ export class ReceiveLibHandler {
 
     private async handleJobAssignmentMessage(packetData: any): Promise<void> {
         // From the PacketSent event, extract the receiver and dstEid
-        const { receiver, dstEid } = packetData.packet;
-        //TODO: Try checksummed address
-        const normalizedReceiver = receiver.length === 66 ? `0x${receiver.slice(-40)}` : receiver;
-        if (!receiver || !dstEid) {
-            console.log("Missing receiver or dstEid in PacketSent event");
+        const { receiver, srcEid } = packetData.packet;
+        const normalizedReceiver = getAddress(receiver.length === 66 ? `0x${receiver.slice(-40)}` : receiver);
+        if (!receiver || !srcEid) {
+            console.log("Missing receiver or srcEid in PacketSent event");
             return;
         }
 
@@ -43,14 +42,14 @@ export class ReceiveLibHandler {
             address: destinationConfig.endpoint,
             abi: endpointABI,
             functionName: "getReceiveLibrary",
-            args: [normalizedReceiver, dstEid]
+            args: [normalizedReceiver, srcEid]
         });
         // If the result is an array (e.g., [libraryAddress, flag]), extract the first element and cast to string
         const libraryAddress = (Array.isArray(result) ? result[0] : result) as string;
         console.log(`Receive library address obtained: ${libraryAddress}`);
 
         // Get the full ULN config from the send library
-        const ulnConfig = await this.getUlnConfig(libraryAddress, normalizedReceiver, dstEid);
+        const ulnConfig = await this.getUlnConfig(libraryAddress, normalizedReceiver, srcEid);
         if (!ulnConfig) {
             console.error("Failed to retrieve ULN config");
             return;
@@ -69,16 +68,19 @@ export class ReceiveLibHandler {
             status: "confirmed",
             timestamp: new Date().toISOString()
         };
-        await this.redisPublishClient.publish("verification", JSON.stringify(verificationMessage)); //TODO: Handle BigInt
+        await this.redisPublishClient.publish("verification", JSON.stringify(verificationMessage,
+            (_key, value) =>
+                typeof value === "bigint" ? value.toString() : value
+        ));
     }
 
-    private async getUlnConfig(libraryAddress: string, receiver: string, dstEid: number): Promise<any> {
+    private async getUlnConfig(libraryAddress: string, receiver: string, srcEid: number): Promise<any> {
         try {
             const config = await this.client.readContract({
                 address: libraryAddress as `0x${string}`,
-                abi: sendUlnABI,
+                abi: receiveUlnAbi,
                 functionName: "getUlnConfig",
-                args: [receiver as `0x${string}`, dstEid]
+                args: [receiver as `0x${string}`, srcEid]
             });
             return config;
         } catch (error) {

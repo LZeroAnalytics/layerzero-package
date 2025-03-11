@@ -16,7 +16,12 @@ export class Verifier {
         this.redisClient.subscribe("verification", async (message: string) => {
             console.log("Verification event received:", message);
             try {
-                const verification = JSON.parse(message);
+                const verification = JSON.parse(message, (_key, value) => {
+                        if (_key === "confirmations" && typeof value === "string") {
+                            return BigInt(value);
+                        }
+                        return value;
+                    });
                 await this.processVerification(verification);
             } catch (error) {
                 console.error("Error processing verification event:", error);
