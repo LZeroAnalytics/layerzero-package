@@ -14,7 +14,7 @@ This package does the following:
 
 1. [Install Docker & start the Docker Daemon if you haven't done so already][docker-installation]
 2. [Install the Kurtosis CLI, or upgrade it to the latest version if it's already installed][kurtosis-cli-installation]
-3. Deploy at least two LayerZero compatible forked networks with funded accounts on each chain and reliable RPC access
+3. Deploy at least two LayerZero compatible forked networks with funded accounts on each chain and reliable RPC access. These networks need to be remote networks and cannot be running on localhost. (See [Coming Soon](#coming-soon) section)
 
 ### Configuration
 
