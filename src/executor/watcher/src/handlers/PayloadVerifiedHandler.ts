@@ -9,40 +9,42 @@ export class PayloadVerifiedHandler {
 
     constructor(
         private client: PublicClient,
-        private redisClient: RedisClientType<any, any>
+        private redisSubscribeClient: RedisClientType<any, any>,
+        private redisPublishClient: RedisClientType<any, any>
     ) {}
 
     public async start(): Promise<void> {
-        this.redisClient.subscribe("jobAssignment", async (message: string) => {
-            console.log("Job assignment received:", message);
+        this.redisSubscribeClient.subscribe("packetEvents", async (message: string) => {
+            console.log("Executor packet sent received:", message);
 
-            const composite = JSON.parse(message);
-            const { key } = composite;
-            const redisKey = `packet:${key}`;
-            const packetData: any = await this.redisClient.get(redisKey);
+            const packetData = JSON.parse(message);
+
             if (!packetData) {
-                console.log(`No matching PacketSent event found in Redis for key: ${key}`);
+                console.log(`No packet found in event`);
                 return;
             }
+
             await this.handlePacketEvent(packetData);
         });
     }
 
     private async handlePacketEvent(packetData: any): Promise<void> {
         const { receiver, dstEid } = packetData.packet;
+        //TODO: Try checksummed address
+        const normalizedReceiver = receiver.length === 66 ? `0x${receiver.slice(-40)}` : receiver;
         try {
             // Retrieve the receive library from the endpoint contract.
             const result = await this.client.readContract({
                 address: destinationConfig.endpoint,
                 abi: endpointABI,
                 functionName: "getReceiveLibrary",
-                args: [receiver, dstEid],
+            args: [normalizedReceiver, dstEid],
             });
             // If result is an array, take the first element.
             const libraryAddress = (Array.isArray(result) ? result[0] : result) as string;
             console.log("Received library address:", libraryAddress);
 
-            const ulnConfig = await this.getUlnConfig(libraryAddress, receiver, dstEid);
+            const ulnConfig = await this.getUlnConfig(libraryAddress, normalizedReceiver, dstEid);
             if (!ulnConfig) {
                 console.error("Failed to retrieve ULN config");
                 return;
@@ -67,13 +69,10 @@ export class PayloadVerifiedHandler {
                         const verificationMessage = {
                             packetData,
                             libraryAddress,
-                            receiver,
-                            dstEid,
-                            ulnConfig,
                             status: "confirmed",
                             timestamp: new Date().toISOString()
                         };
-                        await this.redisClient.publish("verification", JSON.stringify(verificationMessage));
+                        await this.redisPublishClient.publish("verification", JSON.stringify(verificationMessage));
                     }
                 },
             });

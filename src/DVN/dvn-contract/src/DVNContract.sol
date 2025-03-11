@@ -7,19 +7,18 @@ import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../lib/layerzero-v2/packages/layerzero-v2/evm/messagelib/contracts/uln/interfaces/IReceiveUlnE2.sol";
 
 contract LayerZeroDVNContract is Ownable, ILayerZeroDVN {
-    mapping(bytes32 => uint256) public assignedJobs;
     mapping(uint32 => uint256) public messageFees;
+    mapping(bytes32 => bool) public verifiedPackets;
 
-    event JobAssigned(address indexed dvn, bytes32 indexed key, uint256 fee);
     event MessageFeeSet(uint32 indexed dstEid, uint256 messageFee);
     ILayerZeroEndpointV2 public immutable endpoint;
 
-    // The DVN contract will know about the Receive library address.
-    address public receiveLib;
+    // The DVN contract will know about the sendMessageLib address.
+    address public sendMessageLib;
 
-    constructor(ILayerZeroEndpointV2 _endpoint, address _receiveLib, uint32[] memory _dstEids, uint256[] memory _fees) Ownable(msg.sender) {
+    constructor(ILayerZeroEndpointV2 _endpoint, address _sendMessageLib, uint32[] memory _dstEids, uint256[] memory _fees) Ownable(msg.sender) {
         endpoint = _endpoint;
-        receiveLib = _receiveLib;
+        sendMessageLib = _sendMessageLib;
         require(_dstEids.length == _fees.length, "LayerZeroDVNContract: Length mismatch");
         for (uint256 i = 0; i < _dstEids.length; i++) {
             messageFees[_dstEids[i]] = _fees[i];
@@ -35,16 +34,12 @@ contract LayerZeroDVNContract is Ownable, ILayerZeroDVN {
     returns (uint256 fee)
     {
         // Restrict assignJob so that only the endpoint can call it.
-        require(msg.sender == address(endpoint), "Caller must be endpoint");
+        require(msg.sender == sendMessageLib, "Caller must be the sendMessageLib");
 
-        uint32 dstEid = abi.decode(_options, (uint32));
+        uint32 dstEid = _param.dstEid;
         uint256 requiredFee = messageFees[dstEid];
-        require(requiredFee > 0, "LayerZeroDVNContract: invalid destination");
         require(msg.value >= requiredFee, "Insufficient fee");
         fee = requiredFee;
-        bytes32 key = keccak256(abi.encodePacked(_param.packetHeader, _param.payloadHash));
-        assignedJobs[key] = fee;
-        emit JobAssigned(msg.sender, key, fee);
         return fee;
     }
 
@@ -61,7 +56,6 @@ contract LayerZeroDVNContract is Ownable, ILayerZeroDVN {
     returns (uint256 fee)
     {
         fee = messageFees[_dstEid];
-        require(fee > 0, "LayerZeroDVNContract: invalid destination");
         return fee;
     }
 
@@ -70,6 +64,16 @@ contract LayerZeroDVNContract is Ownable, ILayerZeroDVN {
         bytes32 _payloadHash,
         uint64 _confirmations
     ) external onlyOwner {
-        IReceiveUlnE2(receiveLib).verify(_packetHeader, _payloadHash, _confirmations);
+        bytes32 key = keccak256(abi.encodePacked(_packetHeader, _payloadHash));
+        require(!verifiedPackets[key], "Packet already verified");
+        IReceiveUlnE2(sendMessageLib).verify(_packetHeader, _payloadHash, _confirmations);
+        verifiedPackets[key] = true;
+    }
+    function verified(
+        bytes calldata _packetHeader,
+        bytes32 _payloadHash
+    ) external view returns (bool) {
+        bytes32 key = keccak256(abi.encodePacked(_packetHeader, _payloadHash));
+        return verifiedPackets[key];
     }
 }

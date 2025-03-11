@@ -9,19 +9,20 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SimpleExecutor is Ownable, ILayerZeroExecutor {
     event Withdraw(ISendLib indexed lib, address to, uint256 amount);
-    event JobAssigned(address indexed executor, bytes32 indexed key, uint256 fee);
     event MessageFeeSet(uint32 indexed dstEid, uint256 messageFee);
 
     mapping(uint32 => uint256) public messageFees;
-    mapping(bytes32 => uint256) public assignedJobs;
 
     ILayerZeroEndpointV2 public immutable endpoint;
+    address public sendMessageLib;
 
     constructor(
         ILayerZeroEndpointV2 _endpoint,
+        address _sendMessageLib,
         uint32[] memory dstEids,
         uint256[] memory _messageFees
     ) Ownable(msg.sender) {
+        sendMessageLib = _sendMessageLib;
         endpoint = _endpoint;
 
         require(
@@ -45,15 +46,11 @@ contract SimpleExecutor is Ownable, ILayerZeroExecutor {
         bytes calldata options
     ) external override returns (uint256 price) {
         // Only the endpoint can call this function.
-        require(msg.sender == address(endpoint), "Caller must be endpoint");
+        require(msg.sender == sendMessageLib, "Caller must be the sendMessageLib");
 
         uint256 requiredFee = messageFees[dstEid];
         require(requiredFee > 0, "SimpleExecutor: invalid destination");
-
         price = requiredFee;
-        bytes32 key = keccak256(abi.encodePacked(dstEid, sender, calldataSize));
-        assignedJobs[key] = requiredFee;
-        emit JobAssigned(msg.sender, key, requiredFee);
         return requiredFee;
     }
 

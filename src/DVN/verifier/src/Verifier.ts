@@ -1,8 +1,7 @@
 import { WalletClient, PublicClient, HttpTransport, Chain, Account } from "viem";
 import { RedisClientType } from "redis";
 import { chainConfig } from "./config";
-import { keccak256 } from "viem";
-import { abi as receiveUlnABI } from "./abis/ReceiveUln302";
+import { abi as dvnContractABI } from "./abis/DVNContract";
 
 export class Verifier {
     constructor(
@@ -37,56 +36,46 @@ export class Verifier {
             return;
         }
 
-        const { packetEvent, libraryAddress, ulnConfig } = verification;
-        if (!packetEvent || !packetEvent.packetHeader || !packetEvent.payloadHash) {
+        const { packetData, ulnConfig } = verification;
+        if (!packetData || !packetData.packetHeader || !packetData.payloadHash) {
             console.log("Missing packetHeader or payloadHash in PacketSent event");
             return;
         }
 
         // Compute headerHash from packetHeader using keccak256
-        const headerHash = keccak256(packetEvent.packetHeader);
-
         let verified: boolean = await this.publicClient.readContract({
-            address: libraryAddress as `0x${string}`,
-            abi: receiveUlnABI,
-            functionName: "verifiable",
-            args: [ulnConfig, headerHash, packetEvent.payloadHash]
+            address: chainConfig.dvn as `0x${string}`,
+            abi: dvnContractABI,
+            functionName: "verified",
+            args: [packetData.packetHeader, packetData.payloadHash]
         });
-        console.log(`_verified returned: ${verified}`);
+        console.log(`verified returned: ${verified}`);
 
         if (!verified) {
-            console.log("Verification failed. Calling verifyPacket on DVN contract...");
-            // Call verifyPacket on the DVN contract
+            console.log("Packet not verified. Calling verifyPac on DVN contract...");
             const txResult = await this.walletClient.writeContract({
                 address: chainConfig.dvn as `0x${string}`,
-                abi: [
-                    {
-                        inputs: [
-                            { internalType: "bytes", name: "_packetHeader", type: "bytes" },
-                            { internalType: "bytes32", name: "_payloadHash", type: "bytes32" },
-                            { internalType: "uint64", name: "_confirmations", type: "uint64" }
-                        ],
-                        name: "verifyPacket",
-                        outputs: [],
-                        stateMutability: "nonpayable",
-                        type: "function"
-                    }
-                ],
+                abi: dvnContractABI,
                 functionName: "verifyPacket",
-                args: [packetEvent.packetHeader, packetEvent.payloadHash, ulnConfig.confirmations]
+                args: [packetData.packetHeader, packetData.payloadHash, ulnConfig.confirmations]
             });
-            console.log("verifyPacket transaction sent:", txResult);
 
-            // Call _verified again after calling verifyPacket
-            verified = await this.publicClient.readContract({
-                address: libraryAddress as `0x${string}`,
-                abi: receiveUlnABI,
-                functionName: "verifiable",
-                args: [ulnConfig, headerHash, packetEvent.payloadHash]
+            console.log("verifyPac transaction sent:", txResult);
+
+            // Wait for the verifyPac transaction to be confirmed
+            await this.publicClient.waitForTransactionReceipt({
+                hash: txResult,
             });
-            console.log(`_verified after verifyPacket returned: ${verified}`);
+
+            verified = await this.publicClient.readContract({
+                address: chainConfig.dvn as `0x${string}`,
+                abi: dvnContractABI,
+                functionName: "verified",
+                args: [packetData.packetHeader, packetData.payloadHash]
+            });
+            console.log(`isPacketVerified after verifyPacket returned: ${verified}`);
             if (!verified) {
-                console.log("Verification still failed after calling verifyPacket. Aborting.");
+                console.log("Packet still not verified after calling verifyPacket. Aborting.");
                 return;
             }
         }

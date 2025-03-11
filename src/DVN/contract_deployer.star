@@ -29,6 +29,7 @@ def deploy_contract(plan, networks, connections):
             "RPC": net.rpc,
             "ENDPOINT": net.endpoint,
             "TRUSTED_RECEIVE_LIB": net.trusted_receive_lib,
+            "TRUSTED_SEND_LIB": net.trusted_send_lib,
             "EID": net.eid,
             "PRIVATE_KEY": net.private_key,
             "DST_EIDS": dst_eids_str,

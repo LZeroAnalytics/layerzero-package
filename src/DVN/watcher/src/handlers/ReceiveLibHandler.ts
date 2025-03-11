@@ -7,24 +7,32 @@ import { abi as sendUlnABI } from "../abis/SendUln302";
 export class ReceiveLibHandler {
     constructor(
         private client: PublicClient,
-        private redisClient: RedisClientType<any, any>
+        private redisSubscribeClient: RedisClientType<any, any>,
+        private redisPublishClient: RedisClientType<any, any>
     ) {}
 
     async start() {
         console.log("Starting ReceiveLibHandler...");
 
-        // Subscribe to the "jobAssignment" Redis channel to receive assignment messages
-        this.redisClient.subscribe("jobAssignment", async (message) => {
-            console.log("Job assignment message received:", message);
-            await this.handleJobAssignmentMessage(message);
+        // Subscribe to the "packetEvents" Redis channel to receive assignment messages
+        this.redisSubscribeClient.subscribe("packetEvents", async (message) => {
+            console.log("DVN packet event received:", message);
+            const packetData = JSON.parse(message);
+
+            if (!packetData) {
+                console.log("No packetData:", message);
+                return;
+            }
+
+            await this.handleJobAssignmentMessage(packetData);
         });
     }
 
-    private async handleJobAssignmentMessage(message: string): Promise<void> {
-        const composite = JSON.parse(message);
-        const { key, packetEvent } = composite;
+    private async handleJobAssignmentMessage(packetData: any): Promise<void> {
         // From the PacketSent event, extract the receiver and dstEid
-        const { receiver, dstEid } = packetEvent.packet;
+        const { receiver, dstEid } = packetData.packet;
+        //TODO: Try checksummed address
+        const normalizedReceiver = receiver.length === 66 ? `0x${receiver.slice(-40)}` : receiver;
         if (!receiver || !dstEid) {
             console.log("Missing receiver or dstEid in PacketSent event");
             return;
@@ -35,14 +43,14 @@ export class ReceiveLibHandler {
             address: destinationConfig.endpoint,
             abi: endpointABI,
             functionName: "getReceiveLibrary",
-            args: [receiver, dstEid]
+            args: [normalizedReceiver, dstEid]
         });
         // If the result is an array (e.g., [libraryAddress, flag]), extract the first element and cast to string
         const libraryAddress = (Array.isArray(result) ? result[0] : result) as string;
         console.log(`Receive library address obtained: ${libraryAddress}`);
 
         // Get the full ULN config from the send library
-        const ulnConfig = await this.getUlnConfig(libraryAddress, receiver, dstEid);
+        const ulnConfig = await this.getUlnConfig(libraryAddress, normalizedReceiver, dstEid);
         if (!ulnConfig) {
             console.error("Failed to retrieve ULN config");
             return;
@@ -55,17 +63,13 @@ export class ReceiveLibHandler {
 
         // Publish a verification message to Redis so that it can be matched with the PacketSent event later
         const verificationMessage = {
-            key,
-            packetEvent,
+            packetData,
             libraryAddress,
-            receiver,
-            dstEid,
             ulnConfig,
             status: "confirmed",
             timestamp: new Date().toISOString()
         };
-        await this.redisClient.publish("verification", JSON.stringify(verificationMessage));
-        console.log("Verification message published to Redis for key:", key);
+        await this.redisPublishClient.publish("verification", JSON.stringify(verificationMessage)); //TODO: Handle BigInt
     }
 
     private async getUlnConfig(libraryAddress: string, receiver: string, dstEid: number): Promise<any> {

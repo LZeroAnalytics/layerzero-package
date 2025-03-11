@@ -14,7 +14,7 @@ def deploy_contract(plan, networks, connections):
                         break
                 if target_net != None:
                     dst_eids.append(target_net.eid)
-                    fees.append(conn["dvn_fee"])
+                    fees.append(conn["exec_fee"])
                 else:
                     fail("No network found for connection 'to' value: " + conn["to"])
         dst_eids_str = ",".join(dst_eids)
@@ -28,6 +28,7 @@ def deploy_contract(plan, networks, connections):
             "PRIVATE_KEY": net.private_key,
             "DST_EIDS": dst_eids_str,
             "FEES": fees_str,
+            "TRUSTED_SEND_LIB": net.trusted_send_lib,
         }
         cmd = ("forge script script/Deploy.sol:DeploySimpleExecutor --broadcast --json --skip-simulation --via-ir --fork-url " + net.rpc + " | grep 'contract_address' | jq -r '.contract_address' | tr -d '\n'")
         deployment = plan.run_sh(

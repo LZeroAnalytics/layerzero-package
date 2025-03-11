@@ -1,4 +1,4 @@
-import { PublicClient } from "viem";
+import {decodeAbiParameters, PublicClient} from "viem";
 import { RedisClientType } from "redis";
 import { sourceConfig } from "../config";
 import { LZMessageEvent } from "../types";
@@ -10,11 +10,7 @@ export class PacketSentWatcher {
     constructor(
         private client: PublicClient,
         private redisClient: RedisClientType<any, any>
-    ) {}
-
-    private computeKey(event: LZMessageEvent): string {
-        // Concatenate the packetHeader and payloadHash and compute the keccak256 hash
-        return keccak256(concat([event.packetHeader, event.payloadHash]));
+    ) {
     }
 
     start() {
@@ -30,12 +26,13 @@ export class PacketSentWatcher {
                     console.log("PacketSent event detected, tx:", log.transactionHash);
                     const event = await this.processLog(log);
                     if (event) {
-                        // Compute the key based on packetHeader and payloadHash
-                        const key = this.computeKey(event);
-                        const redisKey = `packet:${key}`;
-                        // Store the processed event in Redis with an expiration of 10 minutes (600 seconds)
-                        await this.redisClient.set(redisKey, JSON.stringify(event), { EX: 600 });
-                        console.log(`Stored PacketSent event in Redis with key: ${redisKey}`);
+                        const dvnPaid = await this.queryDVNFeePaid(event);
+                        if (dvnPaid) {
+                            await this.redisClient.publish('packetEvents', JSON.stringify(event));
+                            console.log(`Published PacketSent event to Redis on 'packetEvents' channel as DVN fee is paid.`);
+                        } else {
+                            console.log(`No matching DVNFeePaid event found for tx: ${event.transactionHash}`);
+                        }
                     }
                 }
             }
@@ -55,12 +52,6 @@ export class PacketSentWatcher {
         const packetHeader = packetV1Codec.header() as `0x${string}`;
         const payloadHash = packetV1Codec.payloadHash() as `0x${string}`;
 
-        // Check whether the send lib is correct by comparing the sender address in the packet
-        if (packet.sender.toLowerCase() !== sourceConfig.trustedSendLib.toLowerCase()) {
-            console.log(`Send lib mismatch: expected ${sourceConfig.trustedSendLib}, got ${packet.sender}`);
-            return;
-        }
-
         console.log(`Log valid for tx: ${log.transactionHash}!`);
         return {
             packet,
@@ -69,5 +60,35 @@ export class PacketSentWatcher {
             rawPayload: payLoad,
             transactionHash: log.transactionHash,
         };
+    }
+
+    private async queryDVNFeePaid(event: LZMessageEvent): Promise<boolean> {
+        const receipt = await this.client.getTransactionReceipt({hash: event.transactionHash as `0x${string}`});
+        if (!receipt) {
+            console.log(`[queryDVNFeePaid] Failed to retrieve transaction receipt for tx: ${event.transactionHash}`);
+            return false;
+        }
+        // Compute the DVNFeePaid event signature
+        const dvnFeePaidEventSignature = keccak256(new TextEncoder().encode("DVNFeePaid(address[],address[],uint256[])"));
+        const feePaidEvent = receipt.logs.find((log: any) => log.topics[0] === dvnFeePaidEventSignature);
+        if (feePaidEvent) {
+            // Decode the event data using decodeAbiParameters
+            const decodedData = decodeAbiParameters([
+                {type: "address[]"},
+                {type: "address[]"},
+                {type: "uint256[]"}
+            ], feePaidEvent.data);
+            const requiredDVNs = decodedData[0] as string[];
+            const optionalDVNs = decodedData[1] as string[];
+            const dvnAddress = sourceConfig.dvn.toLowerCase();
+            if (requiredDVNs.map(addr => addr.toLowerCase()).includes(dvnAddress) ||
+                optionalDVNs.map(addr => addr.toLowerCase()).includes(dvnAddress)) {
+                return true;
+            } else {
+                console.log(`[queryDVNFeePaid] DVN address ${sourceConfig.dvn} not found in event parameters.`);
+                return false;
+            }
+        }
+        return false;
     }
 }

@@ -14,7 +14,7 @@ contract DeployDVNContract is Script {
 
         // Retrieve active network parameters.
         address endpointAddr = vm.envAddress("ENDPOINT");
-        address receiveLibAddr = vm.envAddress("TRUSTED_RECEIVE_LIB");
+        address sendMessageLibAddr = vm.envAddress("TRUSTED_SEND_LIB");
 
         // Read comma-separated lists for destination EIDs and fees.
         string memory dstEidsStr = vm.envString("DST_EIDS");
@@ -28,7 +28,7 @@ contract DeployDVNContract is Script {
         vm.startBroadcast(deployer);
         LayerZeroDVNContract dvn = new LayerZeroDVNContract(
             ILayerZeroEndpointV2(endpointAddr),
-            receiveLibAddr,
+            sendMessageLibAddr,
             dstEids,
             feeArray
         );

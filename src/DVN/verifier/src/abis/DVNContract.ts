@@ -227,6 +227,49 @@ export const abi = [
     },
     {
         "type": "function",
+        "name": "verified",
+        "inputs": [
+            {
+                "name": "_packetHeader",
+                "type": "bytes",
+                "internalType": "bytes"
+            },
+            {
+                "name": "_payloadHash",
+                "type": "bytes32",
+                "internalType": "bytes32"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool",
+                "internalType": "bool"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "verifiedPackets",
+        "inputs": [
+            {
+                "name": "",
+                "type": "bytes32",
+                "internalType": "bytes32"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool",
+                "internalType": "bool"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
         "name": "verifyPacket",
         "inputs": [
             {

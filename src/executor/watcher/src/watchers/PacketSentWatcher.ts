@@ -1,32 +1,16 @@
-import { PublicClient } from "viem";
+import {decodeAbiParameters, PublicClient} from "viem";
 import { RedisClientType } from "redis";
 import { sourceConfig } from "../config";
 import { LZMessageEvent } from "../types";
 import { abi as endpointABI } from "../abis/EndpointV2";
 import { PacketV1Codec } from "@layerzerolabs/lz-v2-utilities";
-import { keccak256, concat } from "viem";
+import { keccak256 } from "viem";
 
 export class PacketSentWatcher {
     constructor(
         private client: PublicClient,
         private redisClient: RedisClientType<any, any>
     ) {}
-
-    private computeKey(event: LZMessageEvent): string {
-        // Retrieve dstEid from the configuration
-        const dstEid = event.packet.dstEid;
-        // Get the sender from the packet
-        const sender = event.packet.sender as `0x${string}`;
-        // Use the length of the packet message as calldataSize
-        const calldataSize = event.packet.message.length;
-
-        // Convert dstEid and calldataSize to hex strings matching Solidity's abi.encodePacked formatting
-        const dstEidHex = `0x${dstEid.toString(16).padStart(8, '0')}` as `0x${string}`;
-        const calldataSizeHex = `0x${calldataSize.toString(16)}` as `0x${string}`;
-
-        // Compute and return the keccak256 hash of the concatenated values
-        return keccak256(concat([dstEidHex, sender, calldataSizeHex]));
-    }
 
     start() {
         console.log("Starting PacketSentWatcher...");
@@ -41,12 +25,13 @@ export class PacketSentWatcher {
                     console.log("PacketSent event detected, tx:", log.transactionHash);
                     const event = await this.processLog(log);
                     if (event) {
-                        // Compute the key based on packetHeader and payloadHash
-                        const key = this.computeKey(event);
-                        const redisKey = `packet:${key}`;
-                        // Store the processed event in Redis with an expiration of 10 minutes (600 seconds)
-                        await this.redisClient.set(redisKey, JSON.stringify(event), { EX: 600 });
-                        console.log(`Stored PacketSent event in Redis with key: ${redisKey}`);
+                        const feePaid = await this.queryFeePaid(event);
+                        if (feePaid !== null) {
+                            await this.redisClient.publish('packetEvents', JSON.stringify(event));
+                            console.log(`Published PacketSent event to redis with feePaid: ${feePaid}`);
+                        } else {
+                            console.log(`No matching ExecutorFeePaid event found for tx: ${event.transactionHash}`);
+                        }
                     }
                 }
             }
@@ -66,12 +51,6 @@ export class PacketSentWatcher {
         const packetHeader = packetV1Codec.header() as `0x${string}`;
         const payloadHash = packetV1Codec.payloadHash() as `0x${string}`;
 
-        // Check whether the send lib is correct by comparing the sender address in the packet
-        if (packet.sender.toLowerCase() !== sourceConfig.trustedSendLib.toLowerCase()) {
-            console.log(`Send lib mismatch: expected ${sourceConfig.trustedSendLib}, got ${packet.sender}`);
-            return;
-        }
-
         console.log(`Log valid for tx: ${log.transactionHash}!`);
         return {
             packet,
@@ -80,5 +59,30 @@ export class PacketSentWatcher {
             rawPayload: payLoad,
             transactionHash: log.transactionHash,
         };
+    }
+
+    private async queryFeePaid(event: LZMessageEvent): Promise<bigint | null> {
+        const receipt = await this.client.getTransactionReceipt({
+            hash: event.transactionHash as `0x${string}`,
+        });
+        if (!receipt) {
+            console.log(`[queryFeePaid] Failed to retrieve transaction receipt for tx: ${event.transactionHash}`);
+            return null;
+        }
+        const executorFeePaidEventSignature = keccak256(new TextEncoder().encode("ExecutorFeePaid(address,uint256)"));
+        const feePaidEvent = receipt.logs.find((log: any) =>
+            log.topics[0] === executorFeePaidEventSignature);
+        if (feePaidEvent) {
+            const decodedData = decodeAbiParameters([{ type: "address" }, { type: "uint256" }], feePaidEvent.data);
+            console.log("Decoded data from PacketSent", decodedData);
+            const executorAddress = (decodedData[0] as string).toLowerCase();
+            if (executorAddress === sourceConfig.executor.toLowerCase()) {
+                return decodedData[1] as bigint;
+            } else {
+                console.log(`[queryFeePaid] Executor address mismatch: expected ${sourceConfig.executor}, got ${executorAddress}`);
+                return null;
+            }
+        }
+        return null;
     }
 }

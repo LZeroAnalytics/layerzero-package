@@ -15,6 +15,7 @@ contract DeploySimpleExecutor is Script {
 
         // Active network parameters.
         address endpointAddr = vm.envAddress(string("ENDPOINT"));
+        address sendMessageLibAddr = vm.envAddress("TRUSTED_SEND_LIB");
 
         // Read precomputed comma-separated lists of destination EIDs and fees.
         string memory dstEidsStr = vm.envString("DST_EIDS");
@@ -27,6 +28,7 @@ contract DeploySimpleExecutor is Script {
         vm.startBroadcast(deployer);
         SimpleExecutor executor = new SimpleExecutor(
             ILayerZeroEndpointV2(endpointAddr),
+            sendMessageLibAddr,
             dstEids,
             feeArray
         );

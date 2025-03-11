@@ -2,7 +2,6 @@ import {createPublicClient, defineChain, http} from "viem";
 import { config as dotenvConfig } from "dotenv";
 import { createClient, RedisClientType } from "redis";
 import { PacketSentWatcher } from "./watchers/PacketSentWatcher";
-import { JobAssignedWatcher } from "./watchers/JobAssignedWatcher";
 import { ReceiveLibHandler } from "./handlers/ReceiveLibHandler";
 import {destinationConfig, sourceConfig} from "./config";
 
@@ -42,18 +41,19 @@ async function main() {
         transport: http(destinationConfig.rpc),
     });
 
-    const redisClient: RedisClientType<any, any> = createClient({
+    const redisSubscribeClient: RedisClientType<any, any> = createClient({
         url: process.env.REDIS_URL!,
     });
-    await redisClient.connect();
+    await redisSubscribeClient.connect();
 
-    const packetSentWatcher = new PacketSentWatcher(sourceClient, redisClient);
-    const jobAssignedWatcher = new JobAssignedWatcher(sourceClient, redisClient);
-    const receiveLibHandler = new ReceiveLibHandler(destinationClient, redisClient);
+    const redisPublishClient: RedisClientType<any, any> = redisSubscribeClient.duplicate();
+    await redisPublishClient.connect();
+
+    const packetSentWatcher = new PacketSentWatcher(sourceClient, redisPublishClient);
+    const receiveLibHandler = new ReceiveLibHandler(destinationClient, redisSubscribeClient, redisPublishClient);
 
     // Start the components for handling each step of the workflow
     packetSentWatcher.start();
-    jobAssignedWatcher.start();
     receiveLibHandler.start();
 
     console.log("All event handlers started. Listening for events...");
