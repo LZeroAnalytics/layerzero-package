@@ -2,14 +2,13 @@
 
 This is a LayerZero package developed by [Bloctopus](https://www.bloctopus.io) that facilitates cross-chain message execution and verification using LayerZero V2. The package includes both on-chain and off-chain components for message verification and execution.
 
-This package enables:
+This package does the following:
 
-1. Cross-chain message execution using a decentralized executor.
-2. Verification of messages using a Decentralized Verifier Network (DVN).
-3. Listening for LayerZero events and processing them for verification.
-4. Integration with Redis for event-driven execution.
+1. Deploy simple DVN and Executor contracts into the specified networks
+2. Spin up a DVN off-chain component for each specified connection
+3. Spin up an Executor off-chain component for each specified connection
 
-## Quickstart
+## Get started
 
 ### Prerequisites
 
@@ -19,55 +18,72 @@ This package enables:
 
 ### Configuration
 
-This package is parameterizable using a YAML or JSON configuration file. Below is an example:
+This package is parameterizable using a YAML or JSON configuration file.
+Below is an example which connects two networks that were created through the [Bloctopus](https://www.bloctopus.io) platform:
+
 
 ```yaml
 networks:
   - name: ethereum
     chain_id: "3151908"
-    rpc: https://59e53610a5ef41a3bc5a0e875b4e88f2-rpc.dev.lzeroanalytics.com
+    rpc: https://769aebebe72d4b069840e92ce9b06fad-rpc.dev.lzeroanalytics.com
     endpoint: 0x1a44076050125825900e736c501f859c50fE728c
     trusted_send_lib: 0xbB2Ea70C9E858123480642Cf96acbcCE1372dCe1
     trusted_receive_lib: 0xc02Ab410f0734EFa3F14628780e6e695156024C2
-    trusted_receive_lib_view: 0xc02Ab410f0734EFa3F14628780e6e695156024C2
-    endpoint_view: 0x1a44076050125825900e736c501f859c50fE728c
     eid: "30101"
-    exec_fee: "10000000000000000"
     private_key: 0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31
   - name: arbitrum
     chain_id: "3151910"
-    rpc: https://d420dda0303c431ab3fdd6a8e63d0711-rpc.dev.lzeroanalytics.com
+    rpc: https://ebc3f5fcc4ce423ba43b837872b43941-rpc.dev.lzeroanalytics.com
     endpoint: 0x1a44076050125825900e736c501f859c50fE728c
     trusted_send_lib: 0x975bcD720be66659e3EB3C0e4F1866a3020E493A
     trusted_receive_lib: 0x7B9E184e07a6EE1aC23eAe0fe8D6Be2f663f05e6
-    trusted_receive_lib_view: 0x7B9E184e07a6EE1aC23eAe0fe8D6Be2f663f05e6
-    endpoint_view: 0x1a44076050125825900e736c501f859c50fE728c
     eid: "30110"
-    exec_fee: "10000000000000000"
     private_key: 0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31
+connections:
+  - from: ethereum
+    to: arbitrum
+    exec_fee: "10000000000000000" # in wei
+    dvn_fee: "0" # in wei
 ```
 
-### Parameter Descriptions
+For simplicity, you can also specify a `type` for each network which will automatically use known values for 
+`endpoint`, `trusted_send_lib`, `trusted_receive_lib`, `chain_id` and `eid`.
+Make sure you still specify `name`, `rpc`, and `private_key`. Below are the supported known network:
 
-- `name`: Name of the blockchain network (arbitrary).
-- `chain_id`: Chain ID of the network.
-- `rpc`: RPC endpoint.
-- `endpoint`: LayerZero Endpoint contract address.
-- `trusted_send_lib`: Address of the send library.
-- `trusted_receive_lib`: Address of the receive library.
-- `trusted_receive_lib_view`: View contract for the receive library.
-- `endpoint_view`: Endpoint view contract.
-- `eid`: LayerZero endpoint ID.
-- `exec_fee`: Execution fee in wei.
-- `private_key`: Private key for transaction signing.
+```text
+ethereum_mainnet
+ethereum_sepolia
+ethereum_holesky
+arbitrum_mainnet
+arbitrum_sepolia
+optimism_mainnet
+optimism_sepolia
+base_mainnet
+base_sepolia
+```
 
-## Debugging
+### Running the package
+To run the package, use the command below.
+You can use [network_remote.yaml](network_remote.yaml) or [network_custom.yaml](network_custom.yaml) as sample files.
+```bash
+kurtosis run enclave --name <name> github.com/LZeroAnalytics/layerzero-package --args-file <config file>
+```
 
-Retrieve logs:
+To shut down the enclave, you can run:
 
 ```bash
-kurtosis service logs my-enclave my-service
+kurtosis enclave rm -f <name>
 ```
+
+To retrieve logs from any service, you can run:
+```bash
+kurtosis service logs <name> <service-name>
+```
+
+## Coming Soon
+1. Running fully local deployments including all the required forked networks
+2. Support for chains that LayerZero doesn't currently support (automatic cdeployment of Endpoint and MessageLib)
 
 ## License
 
