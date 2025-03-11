@@ -1,12 +1,17 @@
+constants = import_module("./constants.star")
+
 REQUIRED_FIELDS = [
     "name",
-    "chain_id",
     "rpc",
+    "private_key",
+]
+
+OPTIONAL_FIELDS = [
     "endpoint",
     "trusted_send_lib",
     "trusted_receive_lib",
     "eid",
-    "private_key"
+    "chain_id",
 ]
 
 def input_parser(plan, input_args):
@@ -49,6 +54,15 @@ def input_parser(plan, input_args):
         for field in REQUIRED_FIELDS:
             if field not in network:
                 fail("Network %d is missing required field '%s'." % (idx, field))
+
+        # Use default values from standard networks
+        if "type" in network:
+            if network["type"] not in constants.TEMPLATE_NETWORKS:
+                fail("Specified network type not supported. Please check the README.md")
+            template_network = constants.TEMPLATE_NETWORKS[network["type"]]
+            for field in OPTIONAL_FIELDS:
+                if field not in network:
+                    network[field] = template_network[field]
 
         # Validate RPC connectivity and chain id
         rpc_url = network["rpc"]
