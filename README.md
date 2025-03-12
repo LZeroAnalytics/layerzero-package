@@ -49,7 +49,7 @@ connections:
 
 For simplicity, you can also specify a `type` for each network which will automatically use known values for 
 `endpoint`, `trusted_send_lib`, `trusted_receive_lib`, `chain_id` and `eid`.
-Make sure you still specify `name`, `rpc`, and `private_key`. Below are the supported known network:
+Make sure you still specify `name`, `rpc`, and `private_key`. Below are the supported known networks:
 
 ```text
 ethereum_mainnet
