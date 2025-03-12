@@ -7,23 +7,13 @@ export interface ChainConfig {
     rpc: string;
     chainId: number,
     endpoint: `0x${string}`;
-    endpointView: `0x${string}`;
-    trustedSendLib: `0x${string}`;
-    trustedReceiveLib: `0x${string}`;
-    trustedReceiveLibView: `0x${string}`;
-    eid: number;
-    executor: `0x${string}`;
+    privateKey: `0x${string}`;
 }
 
 export const chainConfig: ChainConfig = {
-    name: process.env.NAME || "local",
-    chainId: Number(process.env.CHAIN_ID) || 1,
-    rpc: process.env.RPC_URL || "http://127.0.0.1:8545",
-    endpoint: process.env.ENDPOINT as `0x${string}`,
-    endpointView: process.env.ENDPOINT_VIEW as `0x${string}`,
-    trustedSendLib: process.env.TRUSTED_SEND_LIB as `0x${string}`,
-    trustedReceiveLib: process.env.TRUSTED_RECEIVE_LIB as `0x${string}`,
-    trustedReceiveLibView: process.env.TRUSTED_RECEIVE_LIB_VIEW as `0x${string}`,
-    eid: parseInt(process.env.EID || "0"),
-    executor: process.env.EXECUTOR as `0x${string}`,
+    name: process.env.DST_NAME || "local",
+    chainId: Number(process.env.DST_CHAIN_ID) || 1,
+    rpc: process.env.DST_RPC_URL || "http://127.0.0.1:8545",
+    endpoint: process.env.DST_ENDPOINT as `0x${string}`,
+    privateKey: process.env.DST_PRIVATE_KEY as `0x${string}`,
 };

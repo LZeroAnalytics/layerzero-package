@@ -1,0 +1,16 @@
+networks:
+  - name: ethereum
+    type: "ethereum_mainnet"
+    chain_id: "3151908"
+    rpc: https://4a8204237c274a81a5229e02125b6ca6-rpc.dev.lzeroanalytics.com
+    private_key: 0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31
+  - name: arbitrum
+    type: "arbitrum_mainnet"
+    chain_id: "3151910"
+    rpc: https://d4e025240aac463a8feb74af9587ca55-rpc.dev.lzeroanalytics.com
+    private_key: 0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31
+connections:
+  - from: ethereum
+    to: arbitrum
+    exec_fee: "10000000000000000"
+    dvn_fee: "0"

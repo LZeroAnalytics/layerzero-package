@@ -14,12 +14,15 @@ contract SimpleExecutor is Ownable, ILayerZeroExecutor {
     mapping(uint32 => uint256) public messageFees;
 
     ILayerZeroEndpointV2 public immutable endpoint;
+    address public sendMessageLib;
 
     constructor(
         ILayerZeroEndpointV2 _endpoint,
+        address _sendMessageLib,
         uint32[] memory dstEids,
         uint256[] memory _messageFees
     ) Ownable(msg.sender) {
+        sendMessageLib = _sendMessageLib;
         endpoint = _endpoint;
 
         require(
@@ -41,8 +44,14 @@ contract SimpleExecutor is Ownable, ILayerZeroExecutor {
         address sender,
         uint256 calldataSize,
         bytes calldata options
-    ) external view override returns (uint256 price) {
-        return getFee(dstEid, sender, calldataSize, options);
+    ) external override returns (uint256 price) {
+        // Only the endpoint can call this function.
+        require(msg.sender == sendMessageLib, "Caller must be the sendMessageLib");
+
+        uint256 requiredFee = messageFees[dstEid];
+        require(requiredFee > 0, "SimpleExecutor: invalid destination");
+        price = requiredFee;
+        return requiredFee;
     }
 
     // @notice query the executor price for relaying the payload and its proof to the destination chain
