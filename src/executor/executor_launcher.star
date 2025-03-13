@@ -16,7 +16,7 @@ def add_executor(
     watcher = plan.add_service(
         name = "executor-watcher-{}-{}".format(src_name, dst_name),
         config = ServiceConfig(
-            image = "tiljordan/layerzero-executor-watcher:v1.0.1",
+            image = "tiljordan/layerzero-executor-watcher:v1.0.2",
             ports = {},
             entrypoint = ["node", "dist/index.js"],
             cmd = [],
@@ -40,7 +40,7 @@ def add_executor(
     committer = plan.add_service(
         name = "committer-{}-{}".format(src_name, dst_name),
         config = ServiceConfig(
-            image = "tiljordan/layerzero-committer:v1.0.2",
+            image = "tiljordan/layerzero-committer:v1.0.3",
             ports = {},
             entrypoint = ["node", "dist/index.js"],
             cmd = [],
@@ -58,7 +58,7 @@ def add_executor(
     executor = plan.add_service(
         name = "executor-{}-{}".format(src_name, dst_name),
         config = ServiceConfig(
-            image = "tiljordan/layerzero-executor:v1.0.2",
+            image = "tiljordan/layerzero-executor:v1.0.3",
             ports = {},
             entrypoint = ["node", "dist/index.js"],
             cmd = [],
