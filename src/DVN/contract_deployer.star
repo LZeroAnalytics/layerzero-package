@@ -40,7 +40,7 @@ def deploy_contract(plan, networks, connections):
         deployment = plan.run_sh(
             name = "dvn-contract-deployer-" + active,
             description = "Deploying DVN contract to network " + active,
-            image = "tiljordan/layerzero-dvn-contract:v1.0.1",
+            image = "tiljordan/layerzero-dvn-contract:v1.0.2",
             env_vars = env_vars,
             run = cmd,
         )
