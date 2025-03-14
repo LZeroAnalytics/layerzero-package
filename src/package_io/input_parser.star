@@ -79,12 +79,12 @@ def input_parser(plan, input_args):
         )
 
         # Verify that the chain id matches the expected value using plan.verify
-        # plan.verify(
-        #     value = result.output,
-        #     assertion = "==",
-        #     target_value = expected_chain_id,
-        #     description = "Verifying chain id for network %s" % network["name"]
-        # )
+        plan.verify(
+            value = result.output,
+            assertion = "==",
+            target_value = expected_chain_id,
+            description = "Verifying chain id for network %s" % network["name"]
+        )
 
         plan.print("RPC verification passed for network '%s' (chain id: %s)" % (network["name"], result.output))
 
