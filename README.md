@@ -67,18 +67,18 @@ base_sepolia
 To run the package, use the command below.
 You can use [network_remote.yaml](network_remote.yaml) or [network_custom.yaml](network_custom.yaml) as sample files.
 ```bash
-kurtosis run enclave --name <name> github.com/LZeroAnalytics/layerzero-package --args-file <config file>
+kurtosis run --enclave <enclave-name> github.com/LZeroAnalytics/layerzero-package --args-file <config file>
 ```
 
 To shut down the enclave, you can run:
 
 ```bash
-kurtosis enclave rm -f <name>
+kurtosis enclave rm -f <enclave-name>
 ```
 
 To retrieve logs from any service, you can run:
 ```bash
-kurtosis service logs <name> <service-name>
+kurtosis service logs <enclave-name> <service-name>
 ```
 
 ## Coming Soon
