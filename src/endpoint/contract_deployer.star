@@ -20,7 +20,7 @@ def deploy_contract(plan, network):
     )
     
     # If the endpoint exists (returns a valid response), use the existing address
-    if check_result.exit_code == 0 and check_result.output != "0x" and not check_result.output.startswith("0x08c379a0"):
+    if check_result.output != "0x" and not check_result.output.startswith("0x08c379a0"):
         plan.print("LayerZero Endpoint already exists at %s for network %s" % (network.endpoint, network.name))
         return network.endpoint
     

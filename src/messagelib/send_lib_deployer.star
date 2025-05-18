@@ -20,7 +20,7 @@ def deploy_contract(plan, network, endpoint_address):
     )
     
     # If the send library exists (returns a valid response), use the existing address
-    if check_result.exit_code == 0 and check_result.output != "0x" and not check_result.output.startswith("0x08c379a0"):
+    if check_result.output != "0x" and not check_result.output.startswith("0x08c379a0"):
         plan.print("ULN302 Send Library already exists at %s for network %s" % (network.trusted_send_lib, network.name))
         return network.trusted_send_lib
     
