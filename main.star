@@ -6,11 +6,29 @@ address_server = import_module("./src/address-server/server_launcher.star")
 redis = import_module("github.com/kurtosis-tech/redis-package/main.star")
 input_parser = import_module("./src/package_io/input_parser.star")
 
+endpoint_deployer = import_module("./src/endpoint/contract_deployer.star")
+send_lib_deployer = import_module("./src/messagelib/send_lib_deployer.star")
+receive_lib_deployer = import_module("./src/messagelib/contract_deployer.star")
+
 def run(plan, args):
 
     # Check input params
     networks = input_parser.input_parser(plan, args)
     connections = args["connections"]
+    
+    # Check and deploy LayerZero endpoint and ULN302 libraries if needed
+    for i, network in enumerate(networks):
+        # Check and deploy endpoint if needed
+        endpoint_address = endpoint_deployer.deploy_contract(plan, network)
+        networks[i].endpoint = endpoint_address
+        
+        # Check and deploy send library if needed
+        send_lib_address = send_lib_deployer.deploy_contract(plan, network, endpoint_address)
+        networks[i].trusted_send_lib = send_lib_address
+        
+        # Check and deploy receive library if needed
+        receive_lib_address = receive_lib_deployer.deploy_contract(plan, network, endpoint_address)
+        networks[i].trusted_receive_lib = receive_lib_address
 
     # Deploy DVN contract
     dvn_addresses = dvn_contract_deployer.deploy_contract(plan, networks, connections)

@@ -63,6 +63,25 @@ def input_parser(plan, input_args):
             for field in OPTIONAL_FIELDS:
                 if field not in network:
                     network[field] = template_network[field]
+        else:
+            # For networks without a type, ensure they have the optional fields
+            # If not provided, we'll use placeholder values that will be replaced with deployed contracts
+            for field in OPTIONAL_FIELDS:
+                if field not in network:
+                    if field == "endpoint":
+                        network[field] = "0x0000000000000000000000000000000000000000"
+                    elif field == "trusted_send_lib":
+                        network[field] = "0x0000000000000000000000000000000000000000"
+                    elif field == "trusted_receive_lib":
+                        network[field] = "0x0000000000000000000000000000000000000000"
+                    elif field == "eid" and "chain_id" in network:
+                        # Generate a default EID based on chain ID if not provided
+                        network[field] = str(30000 + int(network["chain_id"]) % 1000)
+                    elif field == "chain_id" and "eid" in network:
+                        # Generate a default chain ID based on EID if not provided
+                        network[field] = str(int(network["eid"]) % 100000)
+                    else:
+                        fail(f"Network {idx} is missing required field '{field}' and no default could be generated.")
 
         # Validate RPC connectivity and chain id
         rpc_url = network["rpc"]

@@ -81,9 +81,12 @@ To retrieve logs from any service, you can run:
 kurtosis service logs <enclave-name> <service-name>
 ```
 
+## Features
+1. Automatic deployment of LayerZero Endpoint and MessageLib contracts for networks that don't have them
+2. Support for chains that LayerZero doesn't currently support
+
 ## Coming Soon
 1. Running fully local deployments including all the required forked networks
-2. Support for chains that LayerZero doesn't currently support (automatic cdeployment of Endpoint and MessageLib)
 
 ## License
 
