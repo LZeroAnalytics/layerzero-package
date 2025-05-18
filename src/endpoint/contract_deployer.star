@@ -3,29 +3,29 @@ def deploy_contract(plan, network):
     Deploy the LayerZero Endpoint contract to a network if it doesn't exist.
     Returns the endpoint address (either existing or newly deployed).
     """
-    plan.print(f"Checking if LayerZero Endpoint exists for network {network.name}")
+    plan.print("Checking if LayerZero Endpoint exists for network %s" % network.name)
     
     # First check if the endpoint exists by calling a view function
-    check_cmd = f"""
+    check_cmd = """
     curl -s -X POST -H "Content-Type: application/json" \\
-    -d '{{"jsonrpc":"2.0","method":"eth_call","params":[{{"to":"{network.endpoint}","data":"0x06fdde03"}},"latest"],"id":1}}' \\
-    {network.rpc} | jq -r '.result' | tr -d '\\n'
-    """
+    -d '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"%s","data":"0x06fdde03"},"latest"],"id":1}' \\
+    %s | jq -r '.result' | tr -d '\\n'
+    """ % (network.endpoint, network.rpc)
     
     check_result = plan.run_sh(
-        name = f"endpoint-check-{network.name}",
-        description = f"Checking if endpoint exists on network {network.name}",
+        name = "endpoint-check-%s" % network.name,
+        description = "Checking if endpoint exists on network %s" % network.name,
         image = "badouralix/curl-jq",
         run = check_cmd,
     )
     
     # If the endpoint exists (returns a valid response), use the existing address
     if check_result.exit_code == 0 and check_result.output != "0x" and not check_result.output.startswith("0x08c379a0"):
-        plan.print(f"LayerZero Endpoint already exists at {network.endpoint} for network {network.name}")
+        plan.print("LayerZero Endpoint already exists at %s for network %s" % (network.endpoint, network.name))
         return network.endpoint
     
     # If the endpoint doesn't exist, deploy it
-    plan.print(f"LayerZero Endpoint not found at {network.endpoint} for network {network.name}. Deploying new endpoint...")
+    plan.print("LayerZero Endpoint not found at %s for network %s. Deploying new endpoint..." % (network.endpoint, network.name))
     
     env_vars = {
         "NETWORK": network.name,
@@ -37,14 +37,14 @@ def deploy_contract(plan, network):
     cmd = ("forge script script/Deploy.sol:DeployEndpoint --broadcast --json --skip-simulation --via-ir --fork-url " + network.rpc + " | grep 'contract_address' | jq -r '.contract_address' | tr -d '\n'")
     
     deployment = plan.run_sh(
-        name = f"endpoint-deployer-{network.name}",
-        description = f"Deploying LayerZero Endpoint to network {network.name}",
+        name = "endpoint-deployer-%s" % network.name,
+        description = "Deploying LayerZero Endpoint to network %s" % network.name,
         image = "tiljordan/layerzero-endpoint-contract:v1.0.0",  # This image needs to be created
         env_vars = env_vars,
         run = cmd,
     )
     
     endpoint_address = deployment.output
-    plan.print(f"Deployed LayerZero Endpoint at {endpoint_address} for network {network.name}")
+    plan.print("Deployed LayerZero Endpoint at %s for network %s" % (endpoint_address, network.name))
     
     return endpoint_address
