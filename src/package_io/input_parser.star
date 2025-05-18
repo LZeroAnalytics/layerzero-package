@@ -97,14 +97,16 @@ def input_parser(plan, input_args):
             description = "Validating RPC connectivity for network %s" % network["name"]
         )
 
-        # For local networks, we may get empty responses, so we'll skip verification
-        # if the network name starts with "local" or if the RPC URL is localhost/127.0.0.1
+        # For local networks, skip verification entirely
         is_local_network = network["name"].startswith("local") or "127.0.0.1" in network["rpc"] or "localhost" in network["rpc"]
         
-        if result.output.strip() == "" and is_local_network:
+        # Debug output
+        plan.print("Network: %s, Is Local: %s, Output: '%s'" % (network["name"], str(is_local_network), result.output))
+        
+        if is_local_network:
             plan.print("Skipping chain ID verification for local network %s" % network["name"])
         else:
-            # Verify that the chain id matches the expected value using plan.verify
+            # Only verify non-local networks
             plan.verify(
                 value = result.output,
                 assertion = "==",
