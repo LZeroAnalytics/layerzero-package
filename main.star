@@ -8,7 +8,7 @@ input_parser = import_module("./src/package_io/input_parser.star")
 
 endpoint_deployer = import_module("./src/endpoint/contract_deployer.star")
 send_lib_deployer = import_module("./src/messagelib/send_lib_deployer.star")
-receive_lib_deployer = import_module("./src/messagelib/contract_deployer.star")
+receive_lib_deployer = import_module("./src/messagelib/receive_lib_deployer.star")
 
 def run(plan, args):
 
