@@ -33,8 +33,7 @@ def input_parser(plan, input_args):
             fail("Connection is missing 'from' field.")
         if "exec_fee" not in connection:
             fail ("Connection is missing 'exec_fee' field")
-        if "dvn_fee" not in connection:
-            fail("Connection is missing 'dvn_fee' field")
+        # DVN fee is no longer required as it's always set to zero
 
         # Validate that the 'to' and 'from' values correspond to a valid network name.
         valid_network_names = [network["name"] for network in input_args["networks"]]
