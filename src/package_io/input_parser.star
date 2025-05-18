@@ -81,7 +81,7 @@ def input_parser(plan, input_args):
                         # Generate a default chain ID based on EID if not provided
                         network[field] = str(int(network["eid"]) % 100000)
                     else:
-                        fail(f"Network {idx} is missing required field '{field}' and no default could be generated.")
+                        fail("Network %d is missing required field '%s' and no default could be generated." % (idx, field))
 
         # Validate RPC connectivity and chain id
         rpc_url = network["rpc"]
