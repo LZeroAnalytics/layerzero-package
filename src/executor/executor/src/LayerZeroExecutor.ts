@@ -1,4 +1,4 @@
-import {Account, HttpTransport, padHex, WalletClient} from 'viem';
+import {Account, HttpTransport, padHex, PublicClient, WalletClient} from 'viem';
 import {Chain} from 'viem/chains';
 import {config as dotenvConfig} from 'dotenv';
 import {abi as endpointABI} from "./abis/EndpointV2";
@@ -10,6 +10,7 @@ dotenvConfig();
 
 export class LayerZeroExecutor {
     constructor(
+        private publicClient: PublicClient,
         private walletClient: WalletClient<HttpTransport, Chain, Account>,
         private redisClient: RedisClientType<any, any>
     ) {}
@@ -43,7 +44,7 @@ export class LayerZeroExecutor {
         const extraData = "0x";
 
         try {
-            const gasEstimate = await this.walletClient.estimateContractGas({
+            const gasEstimate = await this.publicClient.estimateContractGas({
                 address: chainConfig.endpoint,
                 abi: endpointABI,
                 functionName: "lzReceive",

@@ -35,7 +35,7 @@ def deploy_contract(plan, networks, connections):
         deployment = plan.run_sh(
             name = "executor-contract-deployer-" + active,
             description = "Deploying Executor contract to network " + active,
-            image = "tiljordan/layerzero-executor-contract:v1.0.3",
+            image = "tiljordan/layerzero-executor-contract:v1.0.4",
             env_vars = env_vars,
             run = cmd,
         )

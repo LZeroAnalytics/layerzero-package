@@ -19,7 +19,7 @@ WORKDIR /app
 RUN git clone --depth 1 --branch main https://github.com/LayerZero-Labs/LayerZero-v2.git
 
 # Copy our deployment scripts
-COPY messagelib-contracts/script/Deploy.sol /app/LayerZero-v2/packages/layerzero-v2/evm/messagelib/script/Deploy.sol
+COPY messagelib-contracts/script/DeployReceiveLib.sol /app/LayerZero-v2/packages/layerzero-v2/evm/messagelib/script/DeployReceiveLib.sol
 COPY messagelib-contracts/script/DeploySendLib.sol /app/LayerZero-v2/packages/layerzero-v2/evm/messagelib/script/DeploySendLib.sol
 
 WORKDIR /app/LayerZero-v2/packages/layerzero-v2/evm/messagelib

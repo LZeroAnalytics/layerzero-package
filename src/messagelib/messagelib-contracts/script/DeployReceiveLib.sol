@@ -9,7 +9,7 @@ interface IEndpoint {
     function registerLibrary(address _lib) external;
 }
 
-contract DeployMessageLib is Script {
+contract DeployReceiveLib is Script {
     function run() public {
         // Read the deployer's private key and the endpoint address from environment variables.
         uint256 deployer = vm.envUint("PRIVATE_KEY");

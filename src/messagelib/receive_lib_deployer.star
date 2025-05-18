@@ -30,7 +30,7 @@ def deploy_contract(plan, network, endpoint_address):
         "ENDPOINT": endpoint_address,
     }
     
-    cmd = ("forge script script/DeployReceiveLib.sol:DeployMessageLib --broadcast --json --skip-simulation --via-ir --fork-url " + network.rpc + " | grep 'contract_address' | jq -r '.contract_address' | tr -d '\n'")
+    cmd = ("forge script script/DeployReceiveLib.sol:DeployReceiveLib --broadcast --json --skip-simulation --via-ir --fork-url " + network.rpc + " | grep 'contract_address' | jq -r '.contract_address' | tr -d '\n'")
     
     deployment = plan.run_sh(
         name = "receive-lib-deployer-%s" % network.name,
