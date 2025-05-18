@@ -17,18 +17,32 @@ def run(plan, args):
     connections = args["connections"]
     
     # Check and deploy LayerZero endpoint and ULN302 libraries if needed
-    for i, network in enumerate(networks):
+    updated_networks = []
+    for network in networks:
         # Check and deploy endpoint if needed
         endpoint_address = endpoint_deployer.deploy_contract(plan, network)
-        networks[i].endpoint = endpoint_address
         
         # Check and deploy send library if needed
         send_lib_address = send_lib_deployer.deploy_contract(plan, network, endpoint_address)
-        networks[i].trusted_send_lib = send_lib_address
         
         # Check and deploy receive library if needed
         receive_lib_address = receive_lib_deployer.deploy_contract(plan, network, endpoint_address)
-        networks[i].trusted_receive_lib = receive_lib_address
+        
+        # Create updated network with new addresses
+        updated_network = struct(
+            name = network.name,
+            chain_id = network.chain_id,
+            rpc = network.rpc,
+            private_key = network.private_key,
+            eid = network.eid,
+            endpoint = endpoint_address,
+            trusted_send_lib = send_lib_address,
+            trusted_receive_lib = receive_lib_address
+        )
+        updated_networks.append(updated_network)
+    
+    # Replace the networks list with the updated networks
+    networks = updated_networks
 
     # Deploy DVN contract
     dvn_addresses = dvn_contract_deployer.deploy_contract(plan, networks, connections)
