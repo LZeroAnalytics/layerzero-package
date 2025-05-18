@@ -6,11 +6,7 @@ def deploy_contract(plan, network, endpoint_address):
     plan.print("Checking if ULN302 Send Library exists for network %s" % network.name)
     
     # First check if the send library exists by calling a view function
-    check_cmd = """
-    curl -s -X POST -H "Content-Type: application/json" \\
-    -d '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"%s","data":"0x06fdde03"},"latest"],"id":1}' \\
-    %s | jq -r '.result' | tr -d '\\n'
-    """ % (network.trusted_send_lib, network.rpc)
+    check_cmd = "curl -s -X POST -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{\"to\":\"%s\",\"data\":\"0x06fdde03\"},\"latest\"],\"id\":1}' %s | jq -r '.result' | tr -d '\\n'" % (network.trusted_send_lib, network.rpc)
     
     check_result = plan.run_sh(
         name = "send-lib-check-%s" % network.name,
