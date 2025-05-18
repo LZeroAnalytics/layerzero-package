@@ -42,13 +42,67 @@ export class LayerZeroExecutor {
         const message = packet.message;
         const extraData = "0x";
 
-        const txResult = await this.walletClient.writeContract({
-            address: chainConfig.endpoint,
-            abi: endpointABI,
-            functionName: "lzReceive",
-            args: [origin, receiver, guid, message, extraData],
-        });
+        try {
+            const gasEstimate = await this.walletClient.estimateContractGas({
+                address: chainConfig.endpoint,
+                abi: endpointABI,
+                functionName: "lzReceive",
+                args: [origin, receiver, guid, message, extraData],
+            });
+            
+            console.log(`Estimated gas for execution: ${gasEstimate}`);
+            
+            const safetyMultiplier = 1.2;
+            const adjustedGasEstimate = BigInt(Math.floor(Number(gasEstimate) * safetyMultiplier));
+            
+            await this.updateExecutorFee(Number(packet.srcEid), adjustedGasEstimate);
+            
+            const txResult = await this.walletClient.writeContract({
+                address: chainConfig.endpoint,
+                abi: endpointABI,
+                functionName: "lzReceive",
+                args: [origin, receiver, guid, message, extraData],
+            });
 
-        console.log("Execution submitted:", txResult)
+            console.log("Execution submitted:", txResult);
+        } catch (error) {
+            console.error("Error processing execution:", error);
+            throw error;
+        }
+    }
+    
+    private async updateExecutorFee(srcEid: number, gasEstimate: bigint): Promise<void> {
+        try {
+            const executorAddress = chainConfig.executor;
+            
+            const txResult = await this.walletClient.writeContract({
+                address: executorAddress,
+                abi: [
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "uint32",
+                                "name": "dstEid",
+                                "type": "uint32"
+                            },
+                            {
+                                "internalType": "uint256",
+                                "name": "estimatedGas",
+                                "type": "uint256"
+                            }
+                        ],
+                        "name": "updateFeeWithGasEstimate",
+                        "outputs": [],
+                        "stateMutability": "nonpayable",
+                        "type": "function"
+                    }
+                ],
+                functionName: "updateFeeWithGasEstimate",
+                args: [srcEid, gasEstimate],
+            });
+            console.log(`Updated executor fee for EID ${srcEid} to ${gasEstimate}. Transaction: ${txResult}`);
+        } catch (error) {
+            console.error("Error updating executor fee:", error);
+        }
     }
 }
