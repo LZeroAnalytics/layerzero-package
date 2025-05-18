@@ -11,7 +11,5 @@ networks:
 connections:
   - from: "local1"
     to: "local2"
-    exec_fee: "100000000000000"
   - from: "local2"
     to: "local1"
-    exec_fee: "100000000000000"

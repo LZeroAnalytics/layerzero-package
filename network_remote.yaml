@@ -12,4 +12,3 @@ networks:
 connections:
   - from: ethereum
     to: arbitrum
-    exec_fee: "100000000000000"

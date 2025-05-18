@@ -31,8 +31,7 @@ def input_parser(plan, input_args):
             fail("Connection is missing 'to' field.")
         if "from" not in connection:
             fail("Connection is missing 'from' field.")
-        if "exec_fee" not in connection:
-            fail ("Connection is missing 'exec_fee' field")
+        # exec_fee is now optional as it will be set dynamically based on gas estimation
         # DVN fee is no longer required as it's always set to zero
 
         # Validate that the 'to' and 'from' values correspond to a valid network name.
@@ -41,6 +40,10 @@ def input_parser(plan, input_args):
             fail("Connection 'to' field value '%s' does not match any network name." % connection["to"])
         if connection["from"] not in valid_network_names:
             fail("Connection 'from' field value '%s' does not match any network name." % connection["from"])
+            
+        # Set default value for exec_fee if not provided
+        if "exec_fee" not in connection:
+            connection["exec_fee"] = "0"
 
     networks = input_args["networks"]
     if len(networks) < 2:

@@ -43,8 +43,7 @@ networks:
 connections:
   - from: ethereum
     to: arbitrum
-    exec_fee: "10000000000000000" # in wei
-    dvn_fee: "0" # in wei
+    # exec_fee and dvn_fee are no longer required as they're set dynamically
 ```
 
 For simplicity, you can also specify a `type` for each network which will automatically use known values for 
