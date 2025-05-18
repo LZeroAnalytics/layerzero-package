@@ -87,7 +87,7 @@ def input_parser(plan, input_args):
         rpc_url = network["rpc"]
         expected_chain_id = network["chain_id"]
 
-        command = "curl -s -X POST -H \"Content-Type: application/json\" -d '{\"jsonrpc\":\"2.0\",\"method\":\"eth_chainId\",\"params\":[],\"id\":1}' %s | jq -r '.result' | tr -d '\\n' | xargs printf '%%d'" % rpc_url
+        command = "curl -s -X POST -H \"Content-Type: application/json\" -d '{\"jsonrpc\":\"2.0\",\"method\":\"eth_chainId\",\"params\":[],\"id\":1}' %s | jq -r '.result' | tr -d '\\n' | xargs -r printf '%%d'" % rpc_url
 
         result = plan.run_sh(
             run = command,
