@@ -62,4 +62,25 @@ TEMPLATE_NETWORKS = {
         "eid": "30111",
         "chain_id": "10",
     },
+    "polygon_mainnet": {
+        "endpoint": "0x1a44076050125825900e736c501f859c50fE728c",
+        "trusted_send_lib": "0x6c26c61a97006888ea9E4FA36584c7df57Cd9dA3",
+        "trusted_receive_lib": "0x1322871e4ab09Bc7f5717189434f97bBD9546e95",
+        "eid": "30109",
+        "chain_id": "137"
+    },
+    "bnb_mainnet": {
+        "endpoint": "0x1a44076050125825900e736c501f859c50fE728c",
+        "trusted_send_lib": "0x9F8C645f2D0b2159767Bd6E0839DE4BE49e823DE",
+        "trusted_receive_lib": "0xB217266c3A98C8B2709Ee26836C98cf12f6cCEC1",
+        "eid": "30102",
+        "chain_id": "56"
+    },
+    "avalanche_mainnet": {
+        "endpoint": "0x1a44076050125825900e736c501f859c50fE728c",
+        "trusted_send_lib": "0x197D1333DEA5Fe0D6600E9b396c7f1B1cFCc558a",
+        "trusted_receive_lib": "0xbf3521d309642FA9B1c91A08609505BA09752c61",
+        "eid": "30106",
+        "chain_id": "43114"
+    },
 }
