@@ -1,1 +1,26 @@
 name: github.com/LZeroAnalytics/layerzero-package
+description: |
+  LayerZero
+  =========
+  This Kurtosis package instantiates a LayerZero environment with LayerZero DVN (Data Verification Node) and Executor components for handling cross-chain messaging.
+
+  Prerequisites
+  -------------
+  - Access to blockchain networks that LayerZero supports
+  - RPC endpoints for each blockchain network
+  - Private keys with funded accounts for transaction signing
+
+  Configuration
+  -------------
+  To configure this package, you'll need to provide the following information:
+  - `networks`: Configuration for each network, including:
+    - `name`: Network name (e.g., "ethereum", "arbitrum", "polygon")
+    - `chain_id`: Chain ID of the network
+    - `rpc_url`: RPC URL for the network
+    - `private_key`: Private key for transaction signing
+  - `dvn_config`: Configuration for Data Verification Nodes
+    - `count`: Number of DVNs to deploy
+    - `threshold`: Minimum number of confirmations required
+  - `executor_config`: Configuration for Executors
+    - `gas_price`: Gas price for cross-chain transactions
+    - `confirmation_blocks`: Number of blocks to wait for confirmation
