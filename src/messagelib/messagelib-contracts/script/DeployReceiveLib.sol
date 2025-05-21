@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
 import "forge-std/console2.sol";
-import "../uln/uln302/ReceiveUln302.sol";
+import "../contracts/uln/uln302/ReceiveUln302.sol";
 
 interface IEndpoint {
     function registerLibrary(address _lib) external;

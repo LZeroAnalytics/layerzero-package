@@ -24,11 +24,7 @@ COPY endpoint-contracts/script/Deploy.sol /app/LayerZero-v2/packages/layerzero-v
 
 WORKDIR /app/LayerZero-v2/packages/layerzero-v2/evm/protocol
 
-#
 # Install the protocol's own dependencies (uses remappings in foundry.toml)
-RUN forge install
-
-WORKDIR /app/LayerZero-v2/packages/layerzero-v2/evm/protocol
 RUN forge install
 
 
