@@ -29,6 +29,15 @@ RUN forge install
 
 FROM --platform=$TARGETPLATFORM node:18-slim
 
+# Runtime tools required by entry‑point scripts
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl jq ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Bring Foundry binaries into the runtime image
+COPY --from=builder /root/.foundry /root/.foundry
+ENV PATH="/root/.foundry/bin:${PATH}"
+
 # Copy compiled contracts from builder
 COPY --from=builder /app/LayerZero-v2/packages/layerzero-v2/evm/messagelib /app/messagelib
 

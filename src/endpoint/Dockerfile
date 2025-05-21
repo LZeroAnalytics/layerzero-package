@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     build-essential \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Foundry
@@ -26,7 +27,17 @@ WORKDIR /app/LayerZero-v2/packages/layerzero-v2/evm/protocol
 # Install dependencies and build
 RUN forge install
 
+
 FROM --platform=$TARGETPLATFORM node:18-slim
+
+# Install runtime dependencies needed by entrypoint scripts
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl jq ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy Foundry binaries from the builder stage
+COPY --from=builder /root/.foundry /root/.foundry
+ENV PATH="/root/.foundry/bin:${PATH}"
 
 # Copy compiled contracts from builder
 COPY --from=builder /app/LayerZero-v2/packages/layerzero-v2/evm/protocol /app/endpoint
