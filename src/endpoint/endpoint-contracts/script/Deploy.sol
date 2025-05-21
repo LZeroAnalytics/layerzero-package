@@ -12,9 +12,9 @@ contract DeployEndpoint is Script {
         uint32 eid = uint32(vm.envUint("EID"));
         
         vm.startBroadcast(deployer);
-        
+
         // Deploy the EndpointV2 contract
-        EndpointV2 endpoint = new EndpointV2(eid);
+        EndpointV2 endpoint = new EndpointV2(eid, vm.addr(deployer));
         
         vm.stopBroadcast();
         

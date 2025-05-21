@@ -1,5 +1,5 @@
 # Use multi-stage build for both arm64 and amd64
-FROM --platform=$BUILDPLATFORM node:18 as builder
+FROM --platform=$BUILDPLATFORM ubuntu:24.04 as builder
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -24,25 +24,34 @@ COPY endpoint-contracts/script/Deploy.sol /app/LayerZero-v2/packages/layerzero-v
 
 WORKDIR /app/LayerZero-v2/packages/layerzero-v2/evm/protocol
 
-# Install dependencies and build
+#
+# Install the protocol's own dependencies (uses remappings in foundry.toml)
+RUN forge install
+
+WORKDIR /app/LayerZero-v2/packages/layerzero-v2/evm/protocol
 RUN forge install
 
 
-FROM --platform=$TARGETPLATFORM node:18-slim
+FROM --platform=$TARGETPLATFORM ubuntu:24.04
 
 # Install runtime dependencies needed by entrypoint scripts
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl jq ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+    curl jq ca-certificates nodejs npm git \
+     && rm -rf /var/lib/apt/lists/*
 
-# Copy Foundry binaries from the builder stage
-COPY --from=builder /root/.foundry /root/.foundry
+# Install foundry
+RUN curl -L https://foundry.paradigm.xyz | bash
 ENV PATH="/root/.foundry/bin:${PATH}"
+RUN foundryup
 
 # Copy compiled contracts from builder
 COPY --from=builder /app/LayerZero-v2/packages/layerzero-v2/evm/protocol /app/endpoint
 
 WORKDIR /app/endpoint
+
+RUN npm install
+RUN mkdir -p /lib && cd /lib && git clone --depth 1 https://github.com/foundry-rs/forge-std.git
+RUN forge build
 
 # Add entrypoint script
 COPY entrypoint.sh /app/entrypoint.sh
