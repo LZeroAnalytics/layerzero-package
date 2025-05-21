@@ -14,7 +14,8 @@ def deploy_contract(plan, networks, connections):
                         break
                 if target_net != None:
                     dst_eids.append(target_net.eid)
-                    fees.append(conn["exec_fee"])
+                    # Use "0" as default value for exec_fee if not provided in connection
+                    fees.append(conn.get("exec_fee", "0"))
                 else:
                     fail("No network found for connection 'to' value: " + conn["to"])
         dst_eids_str = ",".join(dst_eids)
@@ -34,7 +35,7 @@ def deploy_contract(plan, networks, connections):
         deployment = plan.run_sh(
             name = "executor-contract-deployer-" + active,
             description = "Deploying Executor contract to network " + active,
-            image = "tiljordan/layerzero-executor-contract:v1.0.3",
+            image = "tiljordan/layerzero-executor-contract:v1.0.4",
             env_vars = env_vars,
             run = cmd,
         )

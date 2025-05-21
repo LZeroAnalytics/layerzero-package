@@ -3,6 +3,7 @@ import {createClient, RedisClientType} from "redis";
 import {
     Account,
     Chain,
+    createPublicClient,
     createWalletClient,
     defineChain,
     http,
@@ -35,12 +36,17 @@ async function main() {
         account,
     });
 
+    const publicClient = createPublicClient({
+        chain: chain,
+        transport: http(chainConfig.rpc),
+    });
+
     const redisClient: RedisClientType<any, any>  = createClient({
         url: process.env.REDIS_URL!,
     });
     await redisClient.connect();
 
-    const executor = new LayerZeroExecutor(walletClient, redisClient);
+    const executor = new LayerZeroExecutor(publicClient, walletClient, redisClient);
     executor.start();
 
     console.log("LayerZero Executor is now listening for events from Redis...");

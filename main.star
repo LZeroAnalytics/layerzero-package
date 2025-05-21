@@ -2,15 +2,46 @@ executor_contract_deployer = import_module("./src/executor/contract_deployer.sta
 executor_deployer = import_module("./src/executor/executor_launcher.star")
 dvn_contract_deployer = import_module("./src/DVN/contract_deployer.star")
 dvn_deployer = import_module("./src/DVN/dvn_launcher.star")
-address_server = import_module("./src/address-server/server_launcher.star")
 redis = import_module("github.com/kurtosis-tech/redis-package/main.star")
 input_parser = import_module("./src/package_io/input_parser.star")
+
+endpoint_deployer = import_module("./src/endpoint/contract_deployer.star")
+send_lib_deployer = import_module("./src/messagelib/send_lib_deployer.star")
+receive_lib_deployer = import_module("./src/messagelib/receive_lib_deployer.star")
 
 def run(plan, args):
 
     # Check input params
     networks = input_parser.input_parser(plan, args)
     connections = args["connections"]
+    
+    # Check and deploy LayerZero endpoint and ULN302 libraries if needed
+    updated_networks = []
+    for network in networks:
+        # Check and deploy endpoint if needed
+        endpoint_address = endpoint_deployer.deploy_contract(plan, network)
+        
+        # Check and deploy send library if needed
+        send_lib_address = send_lib_deployer.deploy_contract(plan, network, endpoint_address)
+        
+        # Check and deploy receive library if needed
+        receive_lib_address = receive_lib_deployer.deploy_contract(plan, network, endpoint_address)
+        
+        # Create updated network with new addresses
+        updated_network = struct(
+            name = network.name,
+            chain_id = network.chain_id,
+            rpc = network.rpc,
+            private_key = network.private_key,
+            eid = network.eid,
+            endpoint = endpoint_address,
+            trusted_send_lib = send_lib_address,
+            trusted_receive_lib = receive_lib_address
+        )
+        updated_networks.append(updated_network)
+    
+    # Replace the networks list with the updated networks
+    networks = updated_networks
 
     # Deploy DVN contract
     dvn_addresses = dvn_contract_deployer.deploy_contract(plan, networks, connections)
@@ -87,10 +118,8 @@ def run(plan, args):
             redis_url = executor_redis_url,
         )
 
-    # Add server to serve contract addresses for front-end
-    address_server.add_server(plan, dvn_addresses, executor_addresses)
-
     return struct(
         dvn_addresses = dvn_addresses,
         executor_addresses = executor_addresses,
+        networks = networks,
     )
