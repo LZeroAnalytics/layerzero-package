@@ -83,4 +83,25 @@ TEMPLATE_NETWORKS = {
         "eid": "30106",
         "chain_id": "43114"
     },
+    "zksync_mainnet": {
+        "endpoint": "0xd07C30aF3Ff30D96BDc9c6044958230Eb797DDBF",
+        "trusted_send_lib": "0x07fD0e370B49919cA8dA0CE842B8177263c0E12c",
+        "trusted_receive_lib": "0x04830f6deCF08Dec9eD6C3fCAD215245B78A59e1",
+        "eid": "30165",
+        "chain_id": "324"
+    },
+    "mantle_mainnet": {
+        "endpoint": "0x1a44076050125825900e736c501f859c50fE728c",
+        "trusted_send_lib": "0xde19274c009A22921E3966a1Ec868cEba40A5DaC",
+        "trusted_receive_lib": "0x8da6512De9379fBF4F09BF520Caf7a85435ed93e",
+        "eid": "30181",
+        "chain_id": "5000"
+    },
+    "fantom_mainnet": {
+        "endpoint": "0x1a44076050125825900e736c501f859c50fE728c",
+        "trusted_send_lib": "0xC17BaBeF02a937093363220b0FB57De04A535D5E",
+        "trusted_receive_lib": "0xe1Dd69A2D08dF4eA6a30a91cC061ac70F98aAbe3",
+        "eid": "30112",
+        "chain_id": "250"
+    }
 }
