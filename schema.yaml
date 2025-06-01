@@ -1,0 +1,66 @@
+version: v1
+type: object
+fields:
+  - key: networks
+    type: array
+    item:
+      type: object
+      fields:
+        - key: name
+          type: string
+          required: true
+          doc: An arbitrary network name
+        - key: type
+          type: enum
+          required: true
+          doc: The network type to automatically use known contract addresses
+          values:
+            - ethereum_mainnet
+            - arbitrum_mainnet
+            - base_mainnet
+            - optimism_mainnet
+            - polygon_mainnet
+            - bnb_mainnet
+            - avalanche_mainnet
+            - ethereum_sepolia
+            - ethereum_holesky
+            - arbitrum_sepolia
+            - base_sepolia
+            - optimism_sepolia
+        - key: chain_id
+          type: string
+          required: true
+          doc: The chain ID of the network
+        - key: rpc
+          type: string
+          required: true
+          doc: The RPC endpoint for the network. Cannot be localhost.
+        - key: private_key
+          type: string
+          required: true
+          doc: A prefunded private key to deploy contracts and execute cross-chain transactions
+        - key: endpoint
+          type: string
+          doc: The address of the deployed endpoint contract
+        - key: trusted_send_lib
+          type: string
+          doc: The address of the deployed ULN302 send library
+        - key: trusted_receive_lib
+          type: string
+          doc: The address of the deployed ULN302 receive library
+        - key: eid
+          type: string
+          doc: The endpoint id of this chain as specified on LayerZero docs or in the deployed endpoint contract
+  - key: connections
+    type: array
+    item:
+      type: object
+      fields:
+        - key: from
+          type: string
+          required: true
+          doc: The name of the source chain. Must be specified in the networks array.
+        - key: to
+          type: string
+          required: true
+          doc: The name of the destination chain. Must be specified in the networks array.

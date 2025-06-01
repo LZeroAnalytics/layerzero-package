@@ -76,6 +76,16 @@ contract SimpleExecutor is Ownable, ILayerZeroExecutor {
         messageFees[dstEid] = messageFee;
         emit MessageFeeSet(dstEid, messageFee);
     }
+    
+    // Update fee based on estimated gas
+    function updateFeeWithGasEstimate(
+        uint32 dstEid,
+        uint256 estimatedGas
+    ) external onlyOwner {
+        // Update the fee with a new estimated gas cost
+        messageFees[dstEid] = estimatedGas;
+        emit MessageFeeSet(dstEid, estimatedGas);
+    }
 
     function withdrawFee(
         ISendLib lib,

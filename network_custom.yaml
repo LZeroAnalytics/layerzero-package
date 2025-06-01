@@ -18,5 +18,3 @@ networks:
 connections:
   - from: ethereum
     to: arbitrum
-    exec_fee: "10000000000000000"
-    dvn_fee: "0"

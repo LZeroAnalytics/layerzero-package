@@ -6,7 +6,6 @@ def deploy_contract(plan, networks, connections):
         active = net.name
 
         dst_eids = []
-        fees = []
         for conn in connections:
             if conn["from"] == active:
                 # Find the target network matching the connection's "to" field
@@ -17,12 +16,10 @@ def deploy_contract(plan, networks, connections):
                         break
                 if target_net != None:
                     dst_eids.append(target_net.eid)
-                    fees.append(conn["dvn_fee"])
                 else:
                     fail("No network found for connection 'to' value: " + conn["to"])
 
         dst_eids_str = ",".join(dst_eids)
-        fees_str = ",".join(fees)
 
         env_vars = {
             "NETWORK": active,
@@ -33,7 +30,6 @@ def deploy_contract(plan, networks, connections):
             "EID": net.eid,
             "PRIVATE_KEY": net.private_key,
             "DST_EIDS": dst_eids_str,
-            "FEES": fees_str,
         }
         # The forge command uses the active network's RPC URL via --fork-url.
         cmd = ("forge script script/Deploy.sol:DeployDVNContract --broadcast --json --skip-simulation --via-ir --fork-url " + net.rpc + " | grep 'contract_address' | jq -r '.contract_address' | tr -d '\n'")
