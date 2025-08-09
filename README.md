@@ -19,6 +19,12 @@ This package does the following:
 
 ### Prerequisites
 
+### Cardano local testing
+To test Cardano LayerZero components against a local chain:
+- First run the local Cardano devnet from LZeroAnalytics/cardano-package and note the Ogmios mapped port and explorer URL.
+- Use Ogmios tx-submission (ws://127.0.0.1:&lt;mapped_port&gt;) for transaction submission and queries.
+- Kupo, Yaci Store, and Yaci Viewer will index and display blocks/txs for verification.
+
 1. [Install Docker & start the Docker Daemon if you haven't done so already][docker-installation]
 2. [Install the Kurtosis CLI, or upgrade it to the latest version if it's already installed][kurtosis-cli-installation]
 3. Deploy at least two LayerZero compatible forked networks with funded accounts on each chain and reliable RPC access. These networks need to be remote networks and cannot be running on localhost. (See [Coming Soon](#coming-soon) section)
