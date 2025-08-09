@@ -9,6 +9,13 @@ This package does the following:
 3. Spin up an Executor off-chain component for each specified connection
 
 ## Get started
+### Repository structure
+- src/
+  - cardano/
+  - evm/
+  - solana/
+  - aptos/
+
 
 ### Prerequisites
 
