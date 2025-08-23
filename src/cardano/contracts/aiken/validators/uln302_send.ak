@@ -36,9 +36,9 @@ validator uln302_send {
     _1: Transaction,
   ) {
     when redeemer is {
-      SetConfigExec(_) -> true
-      SetConfigUln(_) -> true
-      Send(_) -> true
+      SetConfigExec { oapp: _, dst_eid: _, cfg: _ } -> true
+      SetConfigUln { oapp: _, dst_eid: _, cfg: _ } -> true
+      Send { options: _ } -> true
     }
   }
 

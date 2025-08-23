@@ -35,9 +35,9 @@ validator uln302_receive {
     _1: Transaction,
   ) {
     when redeemer is {
-      SetConfigUln(_) -> true
-      CommitVerification(_) -> true
-      Verify(_) -> true
+      SetConfigUln { oapp: _, src_eid: _, cfg: _ } -> true
+      CommitVerification { packet_header: _, payload_hash: _ } -> true
+      Verify { packet_header: _, payload_hash: _, confirmations: _ } -> true
     }
   }
 

@@ -49,9 +49,9 @@ validator endpoint {
     _1: Transaction,
   ) {
     when redeemer is {
-      SetConfig(_) -> true
-      Verify(_) -> true
-      LzReceive(_) -> true
+      SetConfig { oapp: _, dst_eid: _, config_type: _, config: _ } -> true
+      Verify { origin: _, receiver: _, payload_hash: _ } -> true
+      LzReceive { origin: _, receiver: _, guid: _, message: _, extra_data: _ } -> true
     }
   }
 
