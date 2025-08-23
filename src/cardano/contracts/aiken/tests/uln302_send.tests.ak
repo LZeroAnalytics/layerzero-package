@@ -6,9 +6,9 @@ use cardano/assets
 use layerzero/types
 use layerzero/validators/uln302_send
 
-fn mk_fee_out(addr_bytes: ByteArray) -> transaction.Output {
+fn mk_fee_out(vkh: ByteArray) -> transaction.Output {
   transaction.Output {
-    address: address.from_verification_key(addr_bytes),
+    address: address.from_verification_key(vkh),
     value: assets.from_lovelace(1),
     datum: transaction.Datum.NoDatum,
     reference_script: None,
@@ -16,15 +16,15 @@ fn mk_fee_out(addr_bytes: ByteArray) -> transaction.Output {
 }
 
 test uln302_send_requires_fee_outputs_to_executor_and_dvn() {
-  let efa = types.Address32(#"01")
-  let dfa = types.Address32(#"02")
+  let ex_vkh = #"01"
+  let dvn_vkh = #"02"
   let datum = Some(uln302_send.SendDatum {
     oapp: types.Address32(#"00"),
     dst_eid: types.Eid(200),
-    executor_fee_addr: efa,
-    dvn_fee_addr: dfa,
     executor_cfg: types.ExecutorConfig { placeholder: 0 },
     uln_cfg: types.UlnConfig { confirmations: 0, quorum: 1 },
+    executor_fee_vkh: ex_vkh,
+    dvn_fee_vkh: dvn_vkh,
   })
   let hdr = bytearray.new(81)
   let outbound = builtin.constr_data(0, builtin.list_data([builtin.b_data(hdr), builtin.b_data(#"aa"), builtin.i_data(0)]))
@@ -36,7 +36,7 @@ test uln302_send_requires_fee_outputs_to_executor_and_dvn() {
   }
   let tx = transaction.Transaction {
     ..transaction.placeholder,
-    outputs: [out_ob, mk_fee_out(#"01"), mk_fee_out(#"02")],
+    outputs: [out_ob, mk_fee_out(ex_vkh), mk_fee_out(dvn_vkh)],
   }
   let redeemer = uln302_send.SendRedeemer.Send { options: [] }
   expect uln302_send.spend(datum, redeemer, transaction.OutputReference { transaction_id: tx.id, output_index: 0 }, tx) == True
@@ -78,6 +78,8 @@ test uln302_send_accepts_when_outbound_present_and_options_len_matches() {
     dst_eid: types.Eid(200),
     executor_cfg: types.ExecutorConfig { placeholder: 0 },
     uln_cfg: types.UlnConfig { confirmations: 0, quorum: 0 },
+    executor_fee_vkh: #"aa",
+    dvn_fee_vkh: #"bb",
   })
 
   let opts: List<types.WorkerOption> = [
@@ -108,6 +110,8 @@ test uln302_send_rejects_when_header_wrong_length_or_options_mismatch() {
     dst_eid: types.Eid(200),
     executor_cfg: types.ExecutorConfig { placeholder: 0 },
     uln_cfg: types.UlnConfig { confirmations: 0, quorum: 0 },
+    executor_fee_vkh: #"aa",
+    dvn_fee_vkh: #"bb",
   })
 
   let opts: List<types.WorkerOption> = [
