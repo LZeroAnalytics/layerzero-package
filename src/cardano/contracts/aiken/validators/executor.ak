@@ -44,7 +44,7 @@ validator executor {
     _1: Transaction,
   ) {
     when redeemer is {
-      CommitAndExecute { receive_lib: _, lz_receive_param: _, native_drops: _ } -> true
+      CommitAndExecute { receive_lib: _, lz_receive_param: _, native_drops: _ } -> True
     }
   }
 

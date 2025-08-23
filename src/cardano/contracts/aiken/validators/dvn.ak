@@ -53,10 +53,10 @@ validator dvn {
     _1: Transaction,
   ) {
     when redeemer is {
-      SetSigner { signer: _, active: _ } -> true
-      SetQuorum { quorum: _ } -> true
-      AssignJob { param: _, options: _ } -> true
-      Execute { params: _ } -> true
+      SetSigner { signer: _, active: _ } -> True
+      SetQuorum { quorum: _ } -> True
+      AssignJob { param: _, options: _ } -> True
+      Execute { params: _ } -> True
     }
   }
 
