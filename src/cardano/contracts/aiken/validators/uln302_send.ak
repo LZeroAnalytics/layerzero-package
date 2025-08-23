@@ -35,7 +35,6 @@ validator uln302_send {
     _: OutputReference,
     _: Transaction,
   ) {
-    builtin.trace("uln302_send:dispatch")
     case redeemer {
       SetConfigExec { .. } -> true
       SetConfigUln { .. } -> true

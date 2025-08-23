@@ -48,7 +48,6 @@ validator endpoint {
     _: OutputReference,
     _: Transaction,
   ) {
-    builtin.trace("endpoint:dispatch")
     case redeemer {
       SetConfig { .. } -> true
       Verify { .. } -> true

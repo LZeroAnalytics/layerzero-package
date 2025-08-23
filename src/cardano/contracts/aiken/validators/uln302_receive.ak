@@ -34,7 +34,6 @@ validator uln302_receive {
     _: OutputReference,
     _: Transaction,
   ) {
-    builtin.trace("uln302_receive:dispatch")
     case redeemer {
       SetConfigUln { .. } -> true
       CommitVerification { .. } -> true

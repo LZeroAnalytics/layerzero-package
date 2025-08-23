@@ -52,7 +52,6 @@ validator dvn {
     _: OutputReference,
     _: Transaction,
   ) {
-    builtin.trace("dvn:dispatch")
     case redeemer {
       SetSigner { .. } -> true
       SetQuorum { .. } -> true

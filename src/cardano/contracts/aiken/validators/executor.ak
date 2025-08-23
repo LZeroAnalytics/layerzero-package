@@ -43,7 +43,6 @@ validator executor {
     _: OutputReference,
     _: Transaction,
   ) {
-    builtin.trace("executor:commit_and_execute")
     case redeemer {
       CommitAndExecute { .. } -> true
     }
