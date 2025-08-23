@@ -50,7 +50,6 @@ fn parse_attestation(d: Data) -> Option<(ByteArray, ByteArray, Int)> {
   let is_constr = builtin.choose_data(d, True, False, False, False, False)
   if is_constr {
     let pr = builtin.un_constr_data(d)
-    let _idx = pr.1st
     let fs = pr.2nd
     let f0 = builtin.head_list(fs)
     let fs1 = builtin.tail_list(fs)
