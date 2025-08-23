@@ -1,8 +1,13 @@
 use aiken/builtin
+use aiken/builtin
 use aiken/primitive/bytearray
 
 use layerzero/types
 use layerzero/types.{Address32, Address20, Eid, Nonce, Guid, PacketHeaderV1}
+
+pub fn header_hash_v1(header: ByteArray) -> ByteArray {
+  builtin.blake2b_256(header)
+}
 
 pub fn encode_address32(a) -> ByteArray {
   let Address32(bytes) = a
