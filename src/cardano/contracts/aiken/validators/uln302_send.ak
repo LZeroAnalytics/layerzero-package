@@ -32,8 +32,8 @@ validator uln302_send {
   spend(
     datum: Option<SendDatum>,
     redeemer: SendRedeemer,
-    _: OutputReference,
-    _: Transaction,
+    _0: OutputReference,
+    _1: Transaction,
   ) {
     when redeemer is {
       SetConfigExec(_) -> true

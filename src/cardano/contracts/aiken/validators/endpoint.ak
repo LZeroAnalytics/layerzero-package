@@ -45,8 +45,8 @@ validator endpoint {
   spend(
     datum: Option<EndpointDatum>,
     redeemer: EndpointRedeemer,
-    _: OutputReference,
-    _: Transaction,
+    _0: OutputReference,
+    _1: Transaction,
   ) {
     when redeemer is {
       SetConfig(_) -> true

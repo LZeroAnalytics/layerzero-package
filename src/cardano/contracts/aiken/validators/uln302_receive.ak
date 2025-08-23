@@ -31,8 +31,8 @@ validator uln302_receive {
   spend(
     datum: Option<ReceiveDatum>,
     redeemer: ReceiveRedeemer,
-    _: OutputReference,
-    _: Transaction,
+    _0: OutputReference,
+    _1: Transaction,
   ) {
     when redeemer is {
       SetConfigUln(_) -> true

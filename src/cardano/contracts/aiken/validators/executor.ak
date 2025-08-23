@@ -40,8 +40,8 @@ validator executor {
   spend(
     datum: Option<ExecutorDatum>,
     redeemer: ExecutorRedeemer,
-    _: OutputReference,
-    _: Transaction,
+    _0: OutputReference,
+    _1: Transaction,
   ) {
     when redeemer is {
       CommitAndExecute(_) -> true

@@ -49,8 +49,8 @@ validator dvn {
   spend(
     datum: Option<DvnDatum>,
     redeemer: DvnRedeemer,
-    _: OutputReference,
-    _: Transaction,
+    _0: OutputReference,
+    _1: Transaction,
   ) {
     when redeemer is {
       SetSigner(_) -> true
