@@ -1,6 +1,6 @@
 use aiken/collection/list
 use aiken/builtin
-use cardano/transaction.{Datum, Output, OutputReference, Transaction}
+use cardano/transaction.{Datum, Output, OutputReference, Transaction, Input}
 use cardano/assets
 
 use layerzero/types
@@ -92,6 +92,23 @@ fn parse_endpoint_channel(d: Data) -> Option<(types.Origin, types.Address20, typ
     None
   }
 }
+fn has_endpoint_prev_input(prev_nonce: types.Nonce, executed_flag: Bool, inputs: List<Input>) -> Bool {
+  inputs
+    |> list.any(fn(i) {
+      when i.output.datum is {
+        Datum.InlineDatum(d) -> {
+          when parse_endpoint_channel(d) is {
+            Some((_og, _rc, lazy_nonce, executed)) -> lazy_nonce == prev_nonce && executed == executed_flag
+            None -> False
+          }
+        }
+        _ -> False
+      }
+    })
+}
+
+ 
+
 
 fn has_endpoint_prev_output(prev_nonce: types.Nonce, executed_flag: Bool, outputs: List<Output>) -> Bool {
   outputs
@@ -147,9 +164,9 @@ validator executor {
     let types.Origin { nonce: og_nonce, .. } = lp.origin
     let types.Nonce(n_i) = og_nonce
     let prev = types.Nonce(n_i - 1)
-    let ok_prev = has_endpoint_prev_output(prev, True, tx.outputs)
-    let ok_curr = has_endpoint_curr_output(og_nonce, False, tx.outputs)
-    ok_prev && ok_curr && have >= need && need >= 0
+    let ok_prev_in = has_endpoint_prev_input(prev, True, tx.inputs)
+    let ok_curr_out = has_endpoint_curr_output(og_nonce, False, tx.outputs)
+    ok_prev_in && ok_curr_out && have >= need && need >= 0
   }
 
   else(_) {
