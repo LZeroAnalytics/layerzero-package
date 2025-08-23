@@ -3,7 +3,6 @@ use aiken/primitive/bytearray
 
 use layerzero/types
 use layerzero/types.{Address32, Address20, Eid, Nonce, Guid, PacketHeaderV1}
-use layerzero/constants
 
 pub fn encode_address32(a) -> ByteArray {
   let Address32(bytes) = a
@@ -87,7 +86,6 @@ pub fn parse_header_v1(header: ByteArray) -> Option<types.PacketHeaderV1> {
       let src_eid = types.Eid(bytearray.to_int_big_endian(header_src_eid_be(header)))
       let sender_b32 = header_sender_b32(header)
       let dst_eid = header_dst_eid(header)
-      let types.Address20(recv_b20) = header_receiver_b20(header)
       let recv20 = header_receiver_b20(header)
       Some(types.PacketHeaderV1 {
         nonce: nonce,
