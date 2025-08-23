@@ -1,6 +1,7 @@
 use aiken/collection/list
 use aiken/builtin
 use cardano/transaction.{Datum, Output, OutputReference, Transaction}
+use aiken/crypto.{VerificationKeyHash}
 
 use layerzero/types
 use layerzero/dvn_helpers
@@ -10,6 +11,7 @@ pub type DvnDatum {
     vid: Int,
     quorum: Int,
     signers: List<types.Address32>,
+    admin: VerificationKeyHash,
   }
 }
 
@@ -139,12 +141,22 @@ validator dvn {
     tx: Transaction,
   ) {
     when redeemer is {
-      SetSignerSet { signers: _ } -> True
-      SetQuorum { quorum: _ } -> True
+      SetSignerSet { signers: _ } -> {
+        when datum is {
+          Some(DvnDatum { admin: a, .. }) -> list.any(tx.extra_signatories, fn(v) { v == a })
+          None -> False
+        }
+      }
+      SetQuorum { quorum: _ } -> {
+        when datum is {
+          Some(DvnDatum { admin: a, .. }) -> list.any(tx.extra_signatories, fn(v) { v == a })
+          None -> False
+        }
+      }
       AssignJob { param: _, options: _ } -> True
       Execute { params: ps } -> {
         when datum is {
-          Some(DvnDatum { vid: _, quorum: q, signers: ss }) -> {
+          Some(DvnDatum { vid: _, quorum: q, signers: ss, .. }) -> {
             let ok = ps
               |> list.any(fn(p) {
                 let ExecuteParam { vid: _, header_hash: hdrh, payload_hash: plh, signer_count: _ } = p

@@ -3,6 +3,8 @@ use aiken/collection/list
 use aiken/primitive/bytearray
 use cardano/transaction.{Datum, Output, OutputReference, Transaction}
 use cardano/assets
+use cardano/address.{Credential}
+use aiken/crypto.{VerificationKeyHash}
 
 use layerzero/types
 
@@ -12,8 +14,8 @@ pub type SendDatum {
     dst_eid: types.Eid,
     executor_cfg: types.ExecutorConfig,
     uln_cfg: types.UlnConfig,
-    executor_fee_addr: types.Address32,
-    dvn_fee_addr: types.Address32,
+    executor_fee_vkh: VerificationKeyHash,
+    dvn_fee_vkh: VerificationKeyHash,
   }
 }
 
@@ -29,8 +31,20 @@ pub type SendRedeemer {
     cfg: types.UlnConfig,
   }
   Send {
-    options: List<types.WorkerOption>,
+    options: List<types.WorkerOption>
   }
+}
+
+fn has_fee_outputs(outputs: List<Output>, ex_vkh: VerificationKeyHash, dvn_vkh: VerificationKeyHash) -> Bool {
+  let pays_to = fn(o: Output, who: VerificationKeyHash) -> Bool {
+    when o.address.payment_credential is {
+      Credential.VerificationKey(vkh) -> vkh == who && assets.lovelace_of(o.value) > 0
+      _ -> False
+    }
+  }
+  let has_ex = list.any(outputs, fn(o) { pays_to(o, ex_vkh) })
+  let has_dvn = list.any(outputs, fn(o) { pays_to(o, dvn_vkh) })
+  has_ex && has_dvn
 }
 
 fn count_fee_recipients(outputs: List<Output>) -> Int {
@@ -90,9 +104,9 @@ validator uln302_send {
       SetConfigUln { oapp: _, dst_eid: _, cfg: _ } -> True
       Send { options: opts } -> {
         when datum is {
-          Some(SendDatum { oapp: _, dst_eid: _, executor_fee_addr: _, dvn_fee_addr: _, executor_cfg: _, uln_cfg: _ }) -> {
+          Some(SendDatum { oapp: _, dst_eid: _, executor_cfg: _, uln_cfg: _, executor_fee_vkh: ex, dvn_fee_vkh: dv }) -> {
             has_valid_outbound(tx.outputs, list.length(opts)) &&
-            count_fee_recipients(tx.outputs) >= 2
+            has_fee_outputs(tx.outputs, ex, dv)
           }
           None -> False
         }
