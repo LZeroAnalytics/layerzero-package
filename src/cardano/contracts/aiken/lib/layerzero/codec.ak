@@ -46,3 +46,23 @@ fn unwrap_guid(g) -> ByteArray {
   let Guid(b) = g
   b
 }
+pub fn assert_header_v1(header: ByteArray, local_eid: types.Eid) -> Bool {
+  // length must be 81 bytes as per EVM PacketV1 header
+  if bytearray.length(header) != 81 {
+    False
+  } else {
+    let version = bytearray.slice(header, 0, 1)
+    let expected_version = bytearray.from_int_big_endian(1, 1)
+    let dst_eid_be = bytearray.slice(header, 45, 49)
+    let types.Eid(eid_int) = local_eid
+    let expected_dst_eid = bytearray.from_int_big_endian(eid_int, 4)
+    version == expected_version && dst_eid_be == expected_dst_eid
+  }
+}
+
+pub fn header_receiver_b20(header: ByteArray) -> types.Address20 {
+  // receiver is bytes32 at offset 49..81; take last 20 bytes
+  let receiver_b32 = bytearray.slice(header, 49, 81)
+  let b20 = bytearray.slice(receiver_b32, 12, 32)
+  types.Address20(b20)
+}

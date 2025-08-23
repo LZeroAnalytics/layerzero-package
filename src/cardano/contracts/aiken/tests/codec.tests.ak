@@ -37,3 +37,16 @@ test payload_hash_concatenation() {
   let h2 = codec.payload_hash(guid, msg)
   expect h == h2
 }
+  
+test assert_header_v1_checks() {
+  let header = types.PacketHeaderV1 {
+    nonce: types.Nonce(1),
+    src_eid: types.Eid(100),
+    sender: types.Address32(bytearray.new(32)),
+    dst_eid: types.Eid(200),
+    receiver_b20: types.Address20(bytearray.new(20)),
+  }
+  let encoded = codec.encode_header_v1(header)
+  expect codec.assert_header_v1(encoded, types.Eid(200)) == True
+  expect codec.assert_header_v1(encoded, types.Eid(201)) == False
+}

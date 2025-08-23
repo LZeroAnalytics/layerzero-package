@@ -36,8 +36,19 @@ validator uln302_receive {
   ) {
     when redeemer is {
       SetConfigUln { oapp: _, src_eid: _, cfg: _ } -> True
-      CommitVerification { packet_header: _, payload_hash: _ } -> True
-      Verify { packet_header: _, payload_hash: _, confirmations: _ } -> True
+      CommitVerification { packet_header: ph, payload_hash: _ } -> {
+        // For now only assert header against local_eid in datum if present
+        when datum is {
+          Some(ReceiveDatum { local_eid: le }) -> codec.assert_header_v1(ph, le)
+          None -> False
+        }
+      }
+      Verify { packet_header: ph, payload_hash: _, confirmations: _ } -> {
+        when datum is {
+          Some(ReceiveDatum { local_eid: le }) -> codec.assert_header_v1(ph, le)
+          None -> False
+        }
+      }
     }
   }
 
