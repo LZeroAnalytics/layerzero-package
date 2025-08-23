@@ -18,13 +18,13 @@ pub fn encode_address20(a) -> ByteArray {
 
 pub fn encode_eid(a) -> ByteArray {
   when a is {
-    Eid(e) -> builtin.serialize_data(e)
+    Eid(e) -> builtin.serialise_data(e)
   }
 }
 
 pub fn encode_nonce(a) -> ByteArray {
   when a is {
-    Nonce(n) -> builtin.serialize_data(n)
+    Nonce(n) -> builtin.serialise_data(n)
   }
 }
 
