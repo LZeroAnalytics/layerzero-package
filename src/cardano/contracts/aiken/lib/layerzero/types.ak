@@ -71,3 +71,11 @@ pub type AttestationDatum {
     signer_count: Int
   }
 }
+
+pub type OutboundDatum {
+  OutboundDatum {
+    header: ByteArray,
+    payload: ByteArray,
+    options_len: Int
+  }
+}
