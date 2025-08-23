@@ -50,3 +50,17 @@ test assert_header_v1_checks() {
   expect codec.assert_header_v1(encoded, types.Eid(200)) == True
   expect codec.assert_header_v1(encoded, types.Eid(201)) == False
 }
+  
+test header_receiver_b20_extracts_correct_address() {
+  let recv20 = bytearray.from_hex("aabbccddeeff00112233445566778899aabbccdd")
+  let header = types.PacketHeaderV1 {
+    nonce: types.Nonce(7),
+    src_eid: types.Eid(1234),
+    sender: types.Address32(bytearray.new(32)),
+    dst_eid: types.Eid(9999),
+    receiver_b20: types.Address20(recv20),
+  }
+  let encoded = codec.encode_header_v1(header)
+  let extracted = codec.header_receiver_b20(encoded)
+  expect extracted == types.Address20(recv20)
+}
