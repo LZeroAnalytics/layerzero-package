@@ -72,6 +72,15 @@ pub type AttestationDatum {
   }
 }
 
+pub type SigsDatum {
+  SigsDatum {
+    header_hash: ByteArray,
+    payload_hash: ByteArray,
+    sigs: List<ByteArray>,
+    pubs: List<Address32>
+  }
+}
+
 pub type OutboundDatum {
   OutboundDatum {
     header: ByteArray,
