@@ -3,6 +3,7 @@ use aiken/primitive/bytearray
 
 use layerzero/types
 use layerzero/types.{Address32, Address20, Eid, Nonce, Guid, PacketHeaderV1}
+use layerzero/constants
 
 pub fn encode_address32(a) -> ByteArray {
   let Address32(bytes) = a
@@ -41,6 +42,32 @@ pub fn encode_header_v1(h: types.PacketHeaderV1) -> ByteArray {
 pub fn payload_hash(guid: types.Guid, message: ByteArray) -> ByteArray {
   builtin.blake2b_256(bytearray.concat(unwrap_guid(guid), message))
 }
+
+pub fn header_version(header: ByteArray) -> ByteArray {
+  bytearray.slice(header, 0, 1)
+}
+
+pub fn header_nonce_be(header: ByteArray) -> ByteArray {
+  bytearray.slice(header, 1, 9)
+}
+
+pub fn header_src_eid_be(header: ByteArray) -> ByteArray {
+  bytearray.slice(header, 9, 13)
+}
+
+pub fn header_sender_b32(header: ByteArray) -> ByteArray {
+  bytearray.slice(header, 13, 45)
+}
+
+pub fn header_dst_eid_be(header: ByteArray) -> ByteArray {
+  bytearray.slice(header, 45, 49)
+}
+
+pub fn hash_header(header: ByteArray) -> ByteArray {
+  builtin.blake2b_256(header)
+}
+
+
 
 fn unwrap_guid(g) -> ByteArray {
   let Guid(b) = g

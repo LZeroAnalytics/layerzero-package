@@ -2,6 +2,7 @@ use aiken/primitive/bytearray
 
 use layerzero/types
 use layerzero/codec
+use layerzero/constants
 
 test encode_header_v1_layout_simple() {
   let header = types.PacketHeaderV1 {
@@ -14,15 +15,24 @@ test encode_header_v1_layout_simple() {
 
   let encoded = codec.encode_header_v1(header)
 
-  // version byte + encoded fields; we assert prefix is version 1 and total length is 81 bytes
-  let ver = bytearray.slice(encoded, 0, 1)
-  expect ver == bytearray.from_int_big_endian(1, 1)
-  expect bytearray.length(encoded) == 81
-  // quick spot-check offsets: nonce is 8 bytes after version, srcEid next 4 bytes
-  let nonce_be = bytearray.slice(encoded, 1, 9)
+  let ver = codec.header_version(encoded)
+  expect ver == bytearray.from_int_big_endian(constants.header_v1_version, 1)
+  expect bytearray.length(encoded) == constants.header_v1_len
+
+  let nonce_be = codec.header_nonce_be(encoded)
   expect nonce_be == bytearray.from_int_big_endian(1, 8)
-  let src_eid_be = bytearray.slice(encoded, 9, 13)
+
+  let src_eid_be = codec.header_src_eid_be(encoded)
   expect src_eid_be == bytearray.from_int_big_endian(100, 4)
+
+  let dst_eid_be = codec.header_dst_eid_be(encoded)
+  expect dst_eid_be == bytearray.from_int_big_endian(200, 4)
+
+  let sender_b32 = codec.header_sender_b32(encoded)
+  expect bytearray.length(sender_b32) == 32
+
+  let recv_b20 = codec.header_receiver_b20(encoded)
+  expect recv_b20 == types.Address20(bytearray.new(20))
 }
 
 test payload_hash_concatenation() {
