@@ -1,4 +1,5 @@
 use aiken/builtin
+use cardano/transaction.{OutputReference, Transaction}
 
 use layerzero/types
 
@@ -36,10 +37,19 @@ pub type ExecutorRedeemer {
 }
 
 validator executor {
-  fn spend(d: ExecutorDatum, r: ExecutorRedeemer, ctx: builtin.ScriptContext) -> Bool {
+  spend(
+    datum: Option<ExecutorDatum>,
+    redeemer: ExecutorRedeemer,
+    _: OutputReference,
+    _: Transaction,
+  ) {
     builtin.trace("executor:commit_and_execute")
-    case r {
+    case redeemer {
       CommitAndExecute { .. } -> true
     }
+  }
+
+  else(_) {
+    fail
   }
 }

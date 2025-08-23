@@ -1,5 +1,6 @@
 use aiken/builtin
 use aiken/list
+use cardano/transaction.{OutputReference, Transaction}
 
 use layerzero/types
 use layerzero/codec
@@ -41,12 +42,21 @@ pub type EndpointRedeemer {
 }
 
 validator endpoint {
-  fn spend(d: EndpointDatum, r: EndpointRedeemer, ctx: builtin.ScriptContext) -> Bool {
+  spend(
+    datum: Option<EndpointDatum>,
+    redeemer: EndpointRedeemer,
+    _: OutputReference,
+    _: Transaction,
+  ) {
     builtin.trace("endpoint:dispatch")
-    case r {
+    case redeemer {
       SetConfig { .. } -> true
       Verify { .. } -> true
       LzReceive { .. } -> true
     }
+  }
+
+  else(_) {
+    fail
   }
 }

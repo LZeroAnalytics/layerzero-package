@@ -1,4 +1,5 @@
 use aiken/builtin
+use cardano/transaction.{OutputReference, Transaction}
 
 use layerzero/types
 
@@ -45,13 +46,22 @@ pub type DvnRedeemer {
 }
 
 validator dvn {
-  fn spend(d: DvnDatum, r: DvnRedeemer, ctx: builtin.ScriptContext) -> Bool {
+  spend(
+    datum: Option<DvnDatum>,
+    redeemer: DvnRedeemer,
+    _: OutputReference,
+    _: Transaction,
+  ) {
     builtin.trace("dvn:dispatch")
-    case r {
+    case redeemer {
       SetSigner { .. } -> true
       SetQuorum { .. } -> true
       AssignJob { .. } -> true
       Execute { .. } -> true
     }
+  }
+
+  else(_) {
+    fail
   }
 }

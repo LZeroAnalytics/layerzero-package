@@ -1,4 +1,5 @@
 use aiken/builtin
+use cardano/transaction.{OutputReference, Transaction}
 
 use layerzero/types
 
@@ -28,12 +29,21 @@ pub type SendRedeemer {
 }
 
 validator uln302_send {
-  fn spend(d: SendDatum, r: SendRedeemer, ctx: builtin.ScriptContext) -> Bool {
+  spend(
+    datum: Option<SendDatum>,
+    redeemer: SendRedeemer,
+    _: OutputReference,
+    _: Transaction,
+  ) {
     builtin.trace("uln302_send:dispatch")
-    case r {
+    case redeemer {
       SetConfigExec { .. } -> true
       SetConfigUln { .. } -> true
       Send { .. } -> true
     }
+  }
+
+  else(_) {
+    fail
   }
 }
