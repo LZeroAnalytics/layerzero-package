@@ -6,35 +6,35 @@ use layerzero/codec
 
 pub type EndpointDatum {
   EndpointDatum {
-    local_eid: Types.Eid
+    local_eid: types.Eid
   }
 }
 
 pub type ChannelDatum {
   ChannelDatum {
-    origin: Types.Origin,
-    receiver: Types.Address20,
-    lazy_inbound_nonce: Types.Nonce,
+    origin: types.Origin,
+    receiver: types.Address20,
+    lazy_inbound_nonce: types.Nonce,
     executed: Bool,
   }
 }
 
 pub type EndpointRedeemer {
   SetConfig {
-    oapp: Types.Address32,
-    dst_eid: Types.Eid,
+    oapp: types.Address32,
+    dst_eid: types.Eid,
     config_type: Int,
     config: ByteArray,
   }
   Verify {
-    origin: Types.Origin,
-    receiver: Types.Address20,
+    origin: types.Origin,
+    receiver: types.Address20,
     payload_hash: ByteArray,
   }
   LzReceive {
-    origin: Types.Origin,
-    receiver: Types.Address20,
-    guid: Types.Guid,
+    origin: types.Origin,
+    receiver: types.Address20,
+    guid: types.Guid,
     message: ByteArray,
     extra_data: ByteArray,
   }

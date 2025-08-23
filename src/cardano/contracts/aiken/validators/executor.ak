@@ -4,22 +4,22 @@ use layerzero/types
 
 pub type ExecutorDatum {
   ExecutorDatum {
-    local_eid: Types.Eid
+    local_eid: types.Eid
   }
 }
 
 pub type NativeDropParam {
   NativeDropParam {
-    receiver: Types.Address32,
+    receiver: types.Address32,
     amount: Int,
   }
 }
 
 pub type LzReceiveParam {
   LzReceiveParam {
-    origin: Types.Origin,
-    receiver: Types.Address32,
-    guid: Types.Guid,
+    origin: types.Origin,
+    receiver: types.Address32,
+    guid: types.Guid,
     message: ByteArray,
     extra_data: ByteArray,
     gas: Int,

@@ -5,15 +5,15 @@ use layerzero/codec
 
 pub type ReceiveDatum {
   ReceiveDatum {
-    local_eid: Types.Eid
+    local_eid: types.Eid
   }
 }
 
 pub type ReceiveRedeemer {
   SetConfigUln {
-    oapp: Types.Address32,
-    src_eid: Types.Eid,
-    cfg: Types.UlnConfig,
+    oapp: types.Address32,
+    src_eid: types.Eid,
+    cfg: types.UlnConfig,
   }
   CommitVerification {
     packet_header: ByteArray,

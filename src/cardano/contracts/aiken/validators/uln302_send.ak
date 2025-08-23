@@ -4,26 +4,26 @@ use layerzero/types
 
 pub type SendDatum {
   SendDatum {
-    oapp: Types.Address32,
-    dst_eid: Types.Eid,
-    executor_cfg: Types.ExecutorConfig,
-    uln_cfg: Types.UlnConfig,
+    oapp: types.Address32,
+    dst_eid: types.Eid,
+    executor_cfg: types.ExecutorConfig,
+    uln_cfg: types.UlnConfig,
   }
 }
 
 pub type SendRedeemer {
   SetConfigExec {
-    oapp: Types.Address32,
-    dst_eid: Types.Eid,
-    cfg: Types.ExecutorConfig,
+    oapp: types.Address32,
+    dst_eid: types.Eid,
+    cfg: types.ExecutorConfig,
   }
   SetConfigUln {
-    oapp: Types.Address32,
-    dst_eid: Types.Eid,
-    cfg: Types.UlnConfig,
+    oapp: types.Address32,
+    dst_eid: types.Eid,
+    cfg: types.UlnConfig,
   }
   Send {
-    options: List(Types.WorkerOption),
+    options: List(types.WorkerOption),
   }
 }
 

@@ -21,15 +21,15 @@ pub type ExecuteParam {
 
 pub type AssignJobParam {
   AssignJobParam {
-    dst_eid: Types.Eid,
+    dst_eid: types.Eid,
     confirmations: Int,
-    sender: Types.Address32,
+    sender: types.Address32,
   }
 }
 
 pub type DvnRedeemer {
   SetSigner {
-    signer: Types.Address32,
+    signer: types.Address32,
     active: Bool,
   }
   SetQuorum {
