@@ -74,3 +74,23 @@ test header_receiver_b20_extracts_correct_address() {
   let extracted = codec.header_receiver_b20(encoded)
   expect extracted == types.Address20(recv20)
 }
+test parse_header_v1_round_trip() {
+  let recv20 = bytearray.from_hex("0102030405060708090a0b0c0d0e0f1011121314")
+  let header = types.PacketHeaderV1 {
+    nonce: types.Nonce(42),
+    src_eid: types.Eid(123),
+    sender: types.Address32(bytearray.new(32)),
+    dst_eid: types.Eid(456),
+    receiver_b20: types.Address20(recv20),
+  }
+  let enc = codec.encode_header_v1(header)
+  when codec.parse_header_v1(enc) is {
+    Some(ph) -> {
+      expect ph.nonce == types.Nonce(42)
+      expect ph.src_eid == types.Eid(123)
+      expect ph.dst_eid == types.Eid(456)
+      expect ph.receiver_b20 == types.Address20(recv20)
+    }
+    None -> expect False == True
+  }
+}

@@ -67,6 +67,41 @@ pub fn hash_header(header: ByteArray) -> ByteArray {
   builtin.blake2b_256(header)
 }
 
+pub fn header_dst_eid(header: ByteArray) -> types.Eid {
+  let be = header_dst_eid_be(header)
+  types.Eid(bytearray.to_int_big_endian(be))
+}
+
+pub fn header_nonce(header: ByteArray) -> types.Nonce {
+  let be = header_nonce_be(header)
+  types.Nonce(bytearray.to_int_big_endian(be))
+}
+
+pub fn parse_header_v1(header: ByteArray) -> Option<types.PacketHeaderV1> {
+  if bytearray.length(header) != 81 {
+    None
+  } else {
+    let ver = header_version(header)
+    if ver == bytearray.from_int_big_endian(1, 1) {
+      let nonce = header_nonce(header)
+      let src_eid = types.Eid(bytearray.to_int_big_endian(header_src_eid_be(header)))
+      let sender_b32 = header_sender_b32(header)
+      let dst_eid = header_dst_eid(header)
+      let types.Address20(recv_b20) = header_receiver_b20(header)
+      let recv20 = header_receiver_b20(header)
+      Some(types.PacketHeaderV1 {
+        nonce: nonce,
+        src_eid: src_eid,
+        sender: types.Address32(sender_b32),
+        dst_eid: dst_eid,
+        receiver_b20: recv20,
+      })
+    } else {
+      None
+    }
+  }
+}
+
 
 
 fn unwrap_guid(g) -> ByteArray {
