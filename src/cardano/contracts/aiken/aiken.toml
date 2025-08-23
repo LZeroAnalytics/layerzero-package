@@ -1,0 +1,19 @@
+name = "lzeroanalytics/layerzero-cardano"
+version = "0.1.0"
+license = "MIT"
+description = "LayerZero V2 core contracts adapted for Cardano in Aiken (Endpoint, ULN302, Executor, DVN)."
+
+[repository]
+user = "LZeroAnalytics"
+project = "layerzero-package"
+
+[dependencies]
+
+[build]
+entrypoints = [
+  "validators/endpoint.ak",
+  "validators/uln302_send.ak",
+  "validators/uln302_receive.ak",
+  "validators/executor.ak",
+  "validators/dvn.ak",
+]
