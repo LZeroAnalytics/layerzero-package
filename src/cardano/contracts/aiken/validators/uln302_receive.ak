@@ -69,7 +69,7 @@ fn parse_endpoint_channel(d: Data) -> Option<(types.Address20, types.Nonce, Bool
     let tag = pr.1st
     if tag == 1 {
       let fs = pr.2nd
-      let f_origin = builtin.head_list(fs)
+      let _f_origin = builtin.head_list(fs)
       let fs1 = builtin.tail_list(fs)
       let f_receiver = builtin.head_list(fs1)
       let fs2 = builtin.tail_list(fs1)

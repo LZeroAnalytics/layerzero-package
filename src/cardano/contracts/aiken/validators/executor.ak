@@ -56,13 +56,10 @@ validator executor {
     _0: OutputReference,
     tx: Transaction,
   ) {
-    when redeemer is {
-      CommitAndExecute { receive_lib: _, lz_receive_param: _, native_drops: drops } -> {
-        let need = sum_native_drops(drops)
-        let have = total_outputs_lovelace(tx)
-        have >= need && need >= 0
-      }
-    }
+    let CommitAndExecute { receive_lib: _, lz_receive_param: _, native_drops: drops } = redeemer
+    let need = sum_native_drops(drops)
+    let have = total_outputs_lovelace(tx)
+    have >= need && need >= 0
   }
 
   else(_) {
