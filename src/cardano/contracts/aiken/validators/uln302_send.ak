@@ -1,6 +1,6 @@
 use aiken/builtin
 
-use LayerZero/Types
+use layerzero/types
 
 pub type SendDatum {
   SendDatum {

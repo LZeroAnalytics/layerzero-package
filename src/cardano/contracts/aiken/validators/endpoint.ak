@@ -1,8 +1,8 @@
 use aiken/builtin
 use aiken/list
 
-use LayerZero/Types
-use LayerZero/Codec
+use layerzero/types
+use layerzero/codec
 
 pub type EndpointDatum {
   EndpointDatum {
