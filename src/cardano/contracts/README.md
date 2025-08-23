@@ -111,3 +111,23 @@ Next steps
 Security and compatibility
 - No keys or secrets are embedded in code; off-chain components sign and submit.
 - Packet header layout and payload hashing are aligned with EVM to preserve cross-chain compatibility.
+Updates
+
+- SigsDatum (used by DVN and ULN302 Receive)
+  - constructor index 1 with fields:
+    - header_hash: ByteArray
+    - payload_hash: ByteArray
+    - sigs: List<ByteArray> (each 64-byte Ed25519 signature)
+    - pubs: List<Address32> (each 32-byte Ed25519 public key)
+  - Message to sign: msg = blake2b_256(header) || payload_hash
+    - header is the raw PacketV1 header bytes (81 bytes)
+    - payload_hash is computed via codec.payload_hash(guid, message)
+- ULN302 Receive.Verify now requires:
+  - AttestationDatum (constructor 0) with matching header_hash and payload_hash
+  - SigsDatum (constructor 1) with signatures over msg
+  - DVN config provided as a reference input containing signer set and quorum
+  - Endpoint.Verify atomic output for (receiver, prev_nonce), and confirmations >= required_confirmations
+- ULN302 Send:
+  - Fee outputs must go to executor_fee_vkh and dvn_fee_vkh
+- Executor:
+  - Enforces Endpoint IO atomicity (prev input executed=True at prev nonce; curr output executed=False at current nonce) and an executor fee output to executor_fee_vkh
