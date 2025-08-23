@@ -5,27 +5,23 @@ use layerzero/types
 use layerzero/types.{Address32, Address20, Eid, Nonce, Guid, PacketHeaderV1}
 
 pub fn encode_address32(a) -> ByteArray {
-  when a is {
-    Address32(bytes) -> bytes
-  }
+  let Address32(bytes) = a
+  bytes
 }
 
 pub fn encode_address20(a) -> ByteArray {
-  when a is {
-    Address20(bytes) -> bytes
-  }
+  let Address20(bytes) = a
+  bytes
 }
 
 pub fn encode_eid(a) -> ByteArray {
-  when a is {
-    Eid(e) -> builtin.serialise_data(e)
-  }
+  let Eid(e) = a
+  builtin.serialise_data(e)
 }
 
 pub fn encode_nonce(a) -> ByteArray {
-  when a is {
-    Nonce(n) -> builtin.serialise_data(n)
-  }
+  let Nonce(n) = a
+  builtin.serialise_data(n)
 }
 
 pub fn encode_header_v1(h: types.PacketHeaderV1) -> ByteArray {
@@ -46,7 +42,6 @@ pub fn payload_hash(guid: types.Guid, message: ByteArray) -> ByteArray {
 }
 
 fn unwrap_guid(g) -> ByteArray {
-  when g is {
-    Guid(b) -> b
-  }
+  let Guid(b) = g
+  b
 }
