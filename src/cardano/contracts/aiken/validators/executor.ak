@@ -1,4 +1,3 @@
-use aiken/builtin
 use cardano/transaction.{OutputReference, Transaction}
 
 use layerzero/types
@@ -38,14 +37,17 @@ pub type ExecutorRedeemer {
 
 validator executor {
   spend(
-    datum: Option<ExecutorDatum>,
+    _datum: Option<ExecutorDatum>,
     redeemer: ExecutorRedeemer,
     _0: OutputReference,
     _1: Transaction,
   ) {
-    when redeemer is {
-      CommitAndExecute { receive_lib: _, lz_receive_param: _, native_drops: _ } -> True
-    }
+    let CommitAndExecute {
+      receive_lib: _,
+      lz_receive_param: _,
+      native_drops: _,
+    } = redeemer
+    True
   }
 
   else(_) {

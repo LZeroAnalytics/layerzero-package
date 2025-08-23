@@ -1,4 +1,3 @@
-use aiken/builtin
 use cardano/transaction.{OutputReference, Transaction}
 
 use layerzero/types
@@ -47,7 +46,7 @@ pub type DvnRedeemer {
 
 validator dvn {
   spend(
-    datum: Option<DvnDatum>,
+    _datum: Option<DvnDatum>,
     redeemer: DvnRedeemer,
     _0: OutputReference,
     _1: Transaction,

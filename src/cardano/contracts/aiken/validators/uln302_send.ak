@@ -1,4 +1,3 @@
-use aiken/builtin
 use cardano/transaction.{OutputReference, Transaction}
 
 use layerzero/types
@@ -30,7 +29,7 @@ pub type SendRedeemer {
 
 validator uln302_send {
   spend(
-    datum: Option<SendDatum>,
+    _datum: Option<SendDatum>,
     redeemer: SendRedeemer,
     _0: OutputReference,
     _1: Transaction,
