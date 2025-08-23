@@ -9,19 +9,20 @@ pub fn encode_address32(a) -> ByteArray {
   bytes
 }
 
-pub fn encode_address20(a) -> ByteArray {
-  let Address20(bytes) = a
-  bytes
+pub fn encode_address20_to_bytes32(a) -> ByteArray {
+  let Address20(b20) = a
+  let pad = bytearray.from_int_big_endian(0, 12)
+  bytearray.concat(pad, b20)
 }
 
 pub fn encode_eid(a) -> ByteArray {
   let Eid(e) = a
-  builtin.serialise_data(e)
+  bytearray.from_int_big_endian(e, 4)
 }
 
 pub fn encode_nonce(a) -> ByteArray {
   let Nonce(n) = a
-  builtin.serialise_data(n)
+  bytearray.from_int_big_endian(n, 8)
 }
 
 pub fn encode_header_v1(h: types.PacketHeaderV1) -> ByteArray {
@@ -30,7 +31,7 @@ pub fn encode_header_v1(h: types.PacketHeaderV1) -> ByteArray {
   let b2 = encode_eid(h.src_eid)
   let b3 = encode_address32(h.sender)
   let b4 = encode_eid(h.dst_eid)
-  let b5 = encode_address20(h.receiver_b20)
+  let b5 = encode_address20_to_bytes32(h.receiver_b20)
   let b01 = bytearray.concat(b0, b1)
   let b23 = bytearray.concat(b2, b3)
   let b45 = bytearray.concat(b4, b5)

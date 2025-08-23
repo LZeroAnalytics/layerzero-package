@@ -14,9 +14,15 @@ test encode_header_v1_layout_simple() {
 
   let encoded = codec.encode_header_v1(header)
 
-  // version byte + encoded fields; we assert prefix is version 1
+  // version byte + encoded fields; we assert prefix is version 1 and total length is 81 bytes
   let ver = bytearray.slice(encoded, 0, 1)
   expect ver == bytearray.from_int_big_endian(1, 1)
+  expect bytearray.length(encoded) == 81
+  // quick spot-check offsets: nonce is 8 bytes after version, srcEid next 4 bytes
+  let nonce_be = bytearray.slice(encoded, 1, 9)
+  expect nonce_be == bytearray.from_int_big_endian(1, 8)
+  let src_eid_be = bytearray.slice(encoded, 9, 13)
+  expect src_eid_be == bytearray.from_int_big_endian(100, 4)
 }
 
 test payload_hash_concatenation() {
