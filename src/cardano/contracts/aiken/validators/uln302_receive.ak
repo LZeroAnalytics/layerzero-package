@@ -205,6 +205,39 @@ fn find_dvn_signers(inputs: List<Input>) -> Option<List<types.Address32>> {
     },
   )
 }
+fn parse_dvn_quorum(d: Data) -> Option<Int> {
+  let is_constr = builtin.choose_data(d, True, False, False, False, False)
+  if is_constr {
+    let pr = builtin.un_constr_data(d)
+    let fs = pr.2nd
+    let _f_vid = builtin.head_list(fs)
+    let fs1 = builtin.tail_list(fs)
+    let f_quorum = builtin.head_list(fs1)
+    let q = builtin.un_i_data(f_quorum)
+    Some(q)
+  } else {
+    None
+  }
+}
+
+fn find_dvn_quorum(inputs: List<Input>) -> Option<Int> {
+  list.foldr(
+    inputs,
+    None,
+    fn(i, acc) {
+      when acc is {
+        Some(_) -> acc
+        None -> {
+          when i.output.datum is {
+            Datum.InlineDatum(d) -> parse_dvn_quorum(d)
+            _ -> None
+          }
+        }
+      }
+    },
+  )
+}
+
 
 validator uln302_receive {
   spend(
@@ -223,7 +256,7 @@ validator uln302_receive {
       }
       Verify { packet_header: ph, payload_hash: plh, confirmations: confs } -> {
         when datum is {
-          Some(ReceiveDatum { local_eid: le, dvn_vid: _vid, required_quorum: q, required_confirmations: req_c }) -> {
+          Some(ReceiveDatum { local_eid: le, dvn_vid: _vid, required_quorum: _dq, required_confirmations: req_c }) -> {
             let ok_hdr = codec.assert_header_v1(ph, le)
             let hh = codec.header_hash_v1(ph)
             let ok_att = has_matching_attestation(tx.outputs, hh, plh)
@@ -238,9 +271,14 @@ validator uln302_receive {
                 let unique = dvn_helpers.unique_signers(pubs)
                 when find_dvn_signers(tx.reference_inputs) is {
                   Some(set) -> {
-                    let within = dvn_helpers.signers_within_set(pubs, set)
-                    let ok_ms = dvn_helpers.verify_multisig(msg, pubs, sigs, q)
-                    ok_hdr && ok_att && ok_ep && ok_conf && unique && within && ok_ms
+                    when find_dvn_quorum(tx.reference_inputs) is {
+                      Some(q) -> {
+                        let within = dvn_helpers.signers_within_set(pubs, set)
+                        let ok_ms = dvn_helpers.verify_multisig(msg, pubs, sigs, q)
+                        ok_hdr && ok_att && ok_ep && ok_conf && unique && within && ok_ms
+                      }
+                      None -> False
+                    }
                   }
                   None -> False
                 }
