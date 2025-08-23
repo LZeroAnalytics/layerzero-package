@@ -2,6 +2,7 @@ use aiken/builtin
 use aiken/collection/list
 use aiken/primitive/bytearray
 use cardano/transaction.{Datum, Output, OutputReference, Transaction}
+use cardano/assets
 
 use layerzero/types
 
@@ -11,6 +12,8 @@ pub type SendDatum {
     dst_eid: types.Eid,
     executor_cfg: types.ExecutorConfig,
     uln_cfg: types.UlnConfig,
+    executor_fee_addr: types.Address32,
+    dvn_fee_addr: types.Address32,
   }
 }
 
@@ -30,6 +33,17 @@ pub type SendRedeemer {
   }
 }
 
+fn count_fee_recipients(outputs: List<Output>) -> Int {
+  list.foldr(
+    outputs,
+    0,
+    fn(o, acc) {
+      let lov = assets.lovelace_of(o.value)
+      acc + if lov > 0 { 1 } else { 0 }
+    },
+  )
+}
+ 
 fn parse_outbound(d: Data) -> Option<(ByteArray, ByteArray, Int)> {
   let is_constr = builtin.choose_data(d, True, False, False, False, False)
   if is_constr {
@@ -66,7 +80,7 @@ fn has_valid_outbound(outputs: List<Output>, expected_opts_len: Int) -> Bool {
 
 validator uln302_send {
   spend(
-    _datum: Option<SendDatum>,
+    datum: Option<SendDatum>,
     redeemer: SendRedeemer,
     _0: OutputReference,
     tx: Transaction,
@@ -75,7 +89,13 @@ validator uln302_send {
       SetConfigExec { oapp: _, dst_eid: _, cfg: _ } -> True
       SetConfigUln { oapp: _, dst_eid: _, cfg: _ } -> True
       Send { options: opts } -> {
-        has_valid_outbound(tx.outputs, list.length(opts))
+        when datum is {
+          Some(SendDatum { oapp: _, dst_eid: _, executor_fee_addr: _, dvn_fee_addr: _, executor_cfg: _, uln_cfg: _ }) -> {
+            has_valid_outbound(tx.outputs, list.length(opts)) &&
+            count_fee_recipients(tx.outputs) >= 2
+          }
+          None -> False
+        }
       }
     }
   }
