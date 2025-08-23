@@ -1,5 +1,4 @@
 use aiken/builtin
-use aiken/list
 use cardano/transaction.{OutputReference, Transaction}
 
 use layerzero/types
