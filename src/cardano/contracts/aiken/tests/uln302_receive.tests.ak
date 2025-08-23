@@ -69,7 +69,7 @@ test uln302_verify_accepts_with_matching_attestation_and_endpoint_channel_output
     outputs: [out_att, out_ep],
   }
 
-  let datum = Some(uln302_receive.ReceiveDatum { local_eid: local_eid })
+  let datum = Some(uln302_receive.ReceiveDatum { local_eid: local_eid, dvn_vid: 1, required_quorum: 1, required_confirmations: 0 })
   let redeemer = uln302_receive.ReceiveRedeemer.Verify {
     packet_header: ph,
     payload_hash: plh,
@@ -113,7 +113,7 @@ test uln302_verify_rejects_without_endpoint_channel_output() {
     outputs: [out],
   }
 
-  let datum = Some(uln302_receive.ReceiveDatum { local_eid: local_eid })
+  let datum = Some(uln302_receive.ReceiveDatum { local_eid: local_eid, dvn_vid: 1, required_quorum: 1, required_confirmations: 0 })
   let redeemer = uln302_receive.ReceiveRedeemer.Verify {
     packet_header: ph,
     payload_hash: plh_ok,

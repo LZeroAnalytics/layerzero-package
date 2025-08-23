@@ -15,7 +15,7 @@ test uln302_commitverification_accepts_when_header_dst_matches_local_eid() {
   }
   let ph = codec.encode_header_v1(header)
 
-  let datum = Some(uln302_receive.ReceiveDatum { local_eid: local })
+  let datum = Some(uln302_receive.ReceiveDatum { local_eid: local, dvn_vid: 1, required_quorum: 1, required_confirmations: 0 })
   let redeemer = uln302_receive.ReceiveRedeemer.CommitVerification {
     packet_header: ph,
     payload_hash: bytearray.new(32),
@@ -41,7 +41,7 @@ test uln302_commitverification_rejects_when_header_dst_mismatch() {
   }
   let ph = codec.encode_header_v1(header)
 
-  let datum = Some(uln302_receive.ReceiveDatum { local_eid: local })
+  let datum = Some(uln302_receive.ReceiveDatum { local_eid: local, dvn_vid: 1, required_quorum: 1, required_confirmations: 0 })
   let redeemer = uln302_receive.ReceiveRedeemer.CommitVerification {
     packet_header: ph,
     payload_hash: bytearray.new(32),
