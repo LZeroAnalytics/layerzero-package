@@ -78,6 +78,24 @@ Data types and codecs
 - Codec: see aiken/lib/layerzero/codec.ak for Packet V1 header encoder, payload hashing, and helpers.
 - Header v1 is byte-for-byte compatible with EVM’s PacketV1Codec.sol.
 
+Updated semantics (aligned with EVM/altVM)
+- ULN302 Receive
+  - Quorum is sourced from the DVN datum via a reference input (alongside the signer set). Confirmations are enforced from the Receive config datum.
+  - Requires both AttestationDatum (header_hash, payload_hash) and a SigsDatum with signatures and pubs that are unique and members of the DVN signer-set.
+  - Requires an atomic Endpoint.Verify output for the same (receiver, prev_nonce) in the same transaction.
+
+- ULN302 Send
+  - Requires an OutboundDatum inline datum with header length 81 and options length matching the redeemer’s options.
+  - Requires fee outputs to both configured recipients (executor_fee_vkh and dvn_fee_vkh) from the Send config datum.
+
+- Executor (CommitAndExecute)
+  - Requires exactly one Endpoint channel input at prev nonce with executed=True and the corresponding output at current nonce with executed=False (atomic LzReceive transition).
+  - Requires a fee output to the configured executor_fee_vkh and covers native_drops with total lovelace in outputs.
+
+- DVN
+  - Stores signer set and quorum in DvnDatum with an admin VKH for updates.
+  - Multisig uses Ed25519 verification on message = blake2b_256(header_hash || payload_hash) with unique signers and membership enforced.
+
 Notes
 - DVN signatures use Ed25519 multisig with configurable quorum; mapping to Cardano signatures will be enforced via redeemer signatures and datum state.
 - Per-(origin, receiver) channel UTXOs maximize concurrency and avoid global bottlenecks.
