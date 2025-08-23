@@ -7,7 +7,7 @@ Structure:
   - aiken.toml            Project config
   - validators/           On-chain validators (scripts)
   - lib/                  Shared libraries (types, codecs, utils)
-  - tests/                Aiken tests (to be added)
+  - tests/                Aiken tests
 
 Target modules:
 - Endpoint: endpoint state, verification, and execution state machine
@@ -29,7 +29,7 @@ This folder contains the Cardano (Aiken) implementation of the core LayerZero V2
 Status
 - Scaffold and shared modules exist and compile (aiken check).
 - Packet V1 header codec matches EVM fixed-width layout: version(1) + nonce(u64=8) + srcEid(u32=4) + sender(bytes32) + dstEid(u32=4) + receiver(bytes32 padded from address20) => 81 bytes.
-- Basic tests for codec hashing and header layout are in tests/.
+- Tests cover: codec hashing/layout/parse, ULN302 Receive header+attestation gating, DVN Execute quorum, Endpoint nonce/executable gating, and ULN302 Send outbound instruction validation.
 
 Architecture overview
 - State is modeled via UTXOs:
@@ -45,11 +45,24 @@ Architecture overview
 - Fees:
   - Modeled as lovelace on specific outputs; precise distribution to DVN/Executor is performed by off-chain submitters.
 
+UTXO schemas (InlineDatum)
+- AttestationDatum (used by DVN and ReceiveUln302 tests):
+  - constructor index 0 with fields:
+    - header_hash: ByteArray
+    - payload_hash: ByteArray
+    - signer_count: Int
+- OutboundDatum (used by ULN302 Send tests):
+  - constructor index 0 with fields:
+    - header: ByteArray (must be 81 bytes for PacketV1)
+    - payload: ByteArray
+    - options_len: Int
+
 Core flows
 1) Send (ULN302 Send)
    - Input: OApp + options
    - Output: Outbound instruction UTXO with serialized header + payload, along with fee outputs for DVN/Executor workers.
    - Config: Uses ExecutorConfig and UlnConfig resolved per oapp/dstEid. Options are split similar to EVM.
+   - Validation (current): presence of OutboundDatum with header length 81 and options_len matching the redeemer’s options length.
 
 2) Verify (ULN302 Receive + Endpoint)
    - ReceiveUln302.assertHeader(header, localEid) checks version and dstEid.
@@ -61,7 +74,7 @@ Core flows
    - Emits native drops as specified in options by constructing appropriate outputs.
 
 Data types and codecs
-- Types: see aiken/lib/layerzero/types.ak for Eid, Address20/32, Nonce, Origin, Guid, configs.
+- Types: see aiken/lib/layerzero/types.ak for Eid, Address20/32, Nonce, Origin, Guid, configs, AttestationDatum, OutboundDatum.
 - Codec: see aiken/lib/layerzero/codec.ak for Packet V1 header encoder, payload hashing, and helpers.
 - Header v1 is byte-for-byte compatible with EVM’s PacketV1Codec.sol.
 
