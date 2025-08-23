@@ -47,16 +47,6 @@ fn has_fee_outputs(outputs: List<Output>, ex_vkh: VerificationKeyHash, dvn_vkh: 
   has_ex && has_dvn
 }
 
-fn count_fee_recipients(outputs: List<Output>) -> Int {
-  list.foldr(
-    outputs,
-    0,
-    fn(o, acc) {
-      let lov = assets.lovelace_of(o.value)
-      acc + if lov > 0 { 1 } else { 0 }
-    },
-  )
-}
  
 fn parse_outbound(d: Data) -> Option<(ByteArray, ByteArray, Int)> {
   let is_constr = builtin.choose_data(d, True, False, False, False, False)

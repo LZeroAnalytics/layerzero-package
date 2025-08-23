@@ -113,20 +113,6 @@ fn has_endpoint_prev_input(prev_nonce: types.Nonce, executed_flag: Bool, inputs:
  
 
 
-fn has_endpoint_prev_output(prev_nonce: types.Nonce, executed_flag: Bool, outputs: List<Output>) -> Bool {
-  outputs
-    |> list.any(fn(o) {
-      when o.datum is {
-        Datum.InlineDatum(d) -> {
-          when parse_endpoint_channel(d) is {
-            Some((_og, _rc, lazy_nonce, executed)) -> lazy_nonce == prev_nonce && executed == executed_flag
-            None -> False
-          }
-        }
-        _ -> False
-      }
-    })
-}
 
 fn has_endpoint_curr_output(curr_nonce: types.Nonce, executed_flag: Bool, outputs: List<Output>) -> Bool {
   outputs
