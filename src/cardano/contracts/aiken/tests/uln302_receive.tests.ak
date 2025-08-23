@@ -7,14 +7,40 @@ use layerzero/types
 use layerzero/codec
 use layerzero/validators/uln302_receive
 
-test uln302_verify_accepts_with_matching_attestation() {
+fn mk_endpoint_channel_inline(receiver_b20: ByteArray, prev_nonce: Int, origin_nonce: Int) -> transaction.Output {
+  let eid_d = builtin.constr_data(0, builtin.list_data([builtin.i_data(100)]))
+  let sender_d = builtin.constr_data(0, builtin.list_data([builtin.b_data(bytearray.new(32))]))
+  let og_nonce_d = builtin.constr_data(0, builtin.list_data([builtin.i_data(origin_nonce)]))
+  let origin_d =
+    builtin.constr_data(0, builtin.list_data([eid_d, sender_d, og_nonce_d]))
+
+  let recv_d = builtin.constr_data(0, builtin.list_data([builtin.b_data(receiver_b20)]))
+  let lazy_nonce_d = builtin.constr_data(0, builtin.list_data([builtin.i_data(prev_nonce)]))
+  let executed_true_d = builtin.constr_data(1, [])
+
+  let channel_d =
+    builtin.constr_data(
+      1,
+      builtin.list_data([origin_d, recv_d, lazy_nonce_d, executed_true_d]),
+    )
+
+  transaction.Output {
+    address: address.from_verification_key(#"00"),
+    value: assets.zero,
+    datum: transaction.Datum.InlineDatum(channel_d),
+    reference_script: None,
+  }
+}
+
+test uln302_verify_accepts_with_matching_attestation_and_endpoint_channel_output() {
   let local_eid = types.Eid(200)
+  let receiver_b20 = bytearray.new(20)
   let header = types.PacketHeaderV1 {
     nonce: types.Nonce(1),
     src_eid: types.Eid(100),
     sender: types.Address32(bytearray.new(32)),
     dst_eid: local_eid,
-    receiver_b20: types.Address20(bytearray.new(20)),
+    receiver_b20: types.Address20(receiver_b20),
   }
   let ph = codec.encode_header_v1(header)
   let hh = codec.header_hash_v1(ph)
@@ -29,16 +55,18 @@ test uln302_verify_accepts_with_matching_attestation() {
       builtin.list_data([builtin.b_data(hh), builtin.b_data(plh), builtin.i_data(3)]),
     )
 
-  let out = transaction.Output {
+  let out_att = transaction.Output {
     address: address.from_verification_key(#"00"),
     value: assets.zero,
     datum: transaction.Datum.InlineDatum(att),
     reference_script: None,
   }
 
+  let out_ep = mk_endpoint_channel_inline(receiver_b20, 0, 1)
+
   let tx = transaction.Transaction {
     ..transaction.placeholder,
-    outputs: [out],
+    outputs: [out_att, out_ep],
   }
 
   let datum = Some(uln302_receive.ReceiveDatum { local_eid: local_eid })
@@ -51,7 +79,7 @@ test uln302_verify_accepts_with_matching_attestation() {
   expect uln302_receive.spend(datum, redeemer, transaction.OutputReference { transaction_id: transaction.placeholder.id, output_index: 0 }, tx) == True
 }
 
-test uln302_verify_rejects_with_mismatched_attestation() {
+test uln302_verify_rejects_without_endpoint_channel_output() {
   let local_eid = types.Eid(200)
   let header = types.PacketHeaderV1 {
     nonce: types.Nonce(2),
@@ -67,20 +95,16 @@ test uln302_verify_rejects_with_mismatched_attestation() {
   let msg_ok = bytearray.from_utf8("ok")
   let plh_ok = codec.payload_hash(guid_ok, msg_ok)
 
-  let guid_bad = types.Guid(bytearray.from_hex("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"))
-  let msg_bad = bytearray.from_utf8("bad")
-  let plh_bad = codec.payload_hash(guid_bad, msg_bad)
-
-  let att_wrong: Data =
+  let att_ok: Data =
     builtin.constr_data(
       0,
-      builtin.list_data([builtin.b_data(hh), builtin.b_data(plh_bad), builtin.i_data(1)]),
+      builtin.list_data([builtin.b_data(hh), builtin.b_data(plh_ok), builtin.i_data(2)]),
     )
 
   let out = transaction.Output {
     address: address.from_verification_key(#"00"),
     value: assets.zero,
-    datum: transaction.Datum.InlineDatum(att_wrong),
+    datum: transaction.Datum.InlineDatum(att_ok),
     reference_script: None,
   }
 
