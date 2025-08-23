@@ -6,6 +6,7 @@ use layerzero/types
 use layerzero/codec
 use layerzero/dvn_helpers
 use aiken/primitive/bytearray
+use cardano/transaction.{Input}
 
 pub type ReceiveDatum {
   ReceiveDatum {
@@ -162,6 +163,49 @@ fn find_sigs(outputs: List<Output>, hh: ByteArray, ph: ByteArray) -> Option<(Lis
   )
 }
 
+
+fn parse_dvn_signers(d: Data) -> Option<List<types.Address32>> {
+  let is_constr = builtin.choose_data(d, True, False, False, False, False)
+  if is_constr {
+    let pr = builtin.un_constr_data(d)
+    let fs = pr.2nd
+    let _f_vid = builtin.head_list(fs)
+    let fs1 = builtin.tail_list(fs)
+    let _f_quorum = builtin.head_list(fs1)
+    let fs2 = builtin.tail_list(fs1)
+    let f_signers = builtin.head_list(fs2)
+    let fs3 = builtin.tail_list(fs2)
+    let _f_admin = builtin.head_list(fs3)
+    let signers_data = builtin.un_list_data(f_signers)
+    let signers = list.map(signers_data, fn(x) {
+      let prx = builtin.un_constr_data(x)
+      let b = builtin.un_b_data(builtin.head_list(prx.2nd))
+      types.Address32(b)
+    })
+    Some(signers)
+  } else {
+    None
+  }
+}
+
+fn find_dvn_signers(inputs: List<Input>) -> Option<List<types.Address32>> {
+  list.foldr(
+    inputs,
+    None,
+    fn(i, acc) {
+      when acc is {
+        Some(_) -> acc
+        None -> {
+          when i.output.datum is {
+            Datum.InlineDatum(d) -> parse_dvn_signers(d)
+            _ -> None
+          }
+        }
+      }
+    },
+  )
+}
+
 validator uln302_receive {
   spend(
     datum: Option<ReceiveDatum>,
@@ -192,8 +236,14 @@ validator uln302_receive {
               Some((sigs, pubs)) -> {
                 let msg = bytearray.concat(hh, plh)
                 let unique = dvn_helpers.unique_signers(pubs)
-                let ok_ms = dvn_helpers.verify_multisig(msg, pubs, sigs, q)
-                ok_hdr && ok_att && ok_ep && ok_conf && unique && ok_ms
+                when find_dvn_signers(tx.reference_inputs) is {
+                  Some(set) -> {
+                    let within = dvn_helpers.signers_within_set(pubs, set)
+                    let ok_ms = dvn_helpers.verify_multisig(msg, pubs, sigs, q)
+                    ok_hdr && ok_att && ok_ep && ok_conf && unique && within && ok_ms
+                  }
+                  None -> False
+                }
               }
               None -> False
             }

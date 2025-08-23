@@ -2,12 +2,15 @@ use aiken/collection/list
 use aiken/builtin
 use cardano/transaction.{Datum, Output, OutputReference, Transaction, Input}
 use cardano/assets
+use aiken/crypto.{VerificationKeyHash}
+use cardano/address.{Credential}
 
 use layerzero/types
 
 pub type ExecutorDatum {
   ExecutorDatum {
-    local_eid: types.Eid
+    local_eid: types.Eid,
+    executor_fee_vkh: VerificationKeyHash
   }
 }
 
@@ -151,22 +154,38 @@ fn total_outputs_lovelace(tx: Transaction) -> Int {
   )
 }
 
+fn has_executor_fee_output(outputs: List<Output>, vkh: VerificationKeyHash) -> Bool {
+  outputs
+    |> list.any(fn(o) {
+      when o.address.payment_credential is {
+        Credential.VerificationKey(k) -> k == vkh && assets.lovelace_of(o.value) > 0
+        _ -> False
+      }
+    })
+}
+
 validator executor {
   spend(
-    _datum: Option<ExecutorDatum>,
+    datum: Option<ExecutorDatum>,
     redeemer: ExecutorRedeemer,
     _0: OutputReference,
     tx: Transaction,
   ) {
     let CommitAndExecute { receive_lib: _, lz_receive_param: lp, native_drops: drops } = redeemer
-    let need = sum_native_drops(drops)
-    let have = total_outputs_lovelace(tx)
-    let types.Origin { nonce: og_nonce, .. } = lp.origin
-    let types.Nonce(n_i) = og_nonce
-    let prev = types.Nonce(n_i - 1)
-    let ok_prev_in = has_endpoint_prev_input(prev, True, tx.inputs)
-    let ok_curr_out = has_endpoint_curr_output(og_nonce, False, tx.outputs)
-    ok_prev_in && ok_curr_out && have >= need && need >= 0
+    when datum is {
+      Some(ExecutorDatum { local_eid: _, executor_fee_vkh: fee_vkh }) -> {
+        let need = sum_native_drops(drops)
+        let have = total_outputs_lovelace(tx)
+        let types.Origin { nonce: og_nonce, .. } = lp.origin
+        let types.Nonce(n_i) = og_nonce
+        let prev = types.Nonce(n_i - 1)
+        let ok_prev_in = has_endpoint_prev_input(prev, True, tx.inputs)
+        let ok_curr_out = has_endpoint_curr_output(og_nonce, False, tx.outputs)
+        let ok_fee = has_executor_fee_output(tx.outputs, fee_vkh)
+        ok_prev_in && ok_curr_out && ok_fee && have >= need && need >= 0
+      }
+      None -> False
+    }
   }
 
   else(_) {
