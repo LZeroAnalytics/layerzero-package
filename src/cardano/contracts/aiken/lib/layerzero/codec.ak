@@ -1,5 +1,5 @@
 use aiken/builtin
-use aiken/bytearray
+use aiken/primitive/bytearray
 
 use layerzero/types
 
