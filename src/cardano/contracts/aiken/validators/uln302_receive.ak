@@ -75,7 +75,6 @@ fn parse_endpoint_channel(d: Data) -> Option<(types.Address20, types.Nonce, Bool
     let tag = pr.1st
     if tag == 1 {
       let fs = pr.2nd
-      let _f_origin = builtin.head_list(fs)
       let fs1 = builtin.tail_list(fs)
       let f_receiver = builtin.head_list(fs1)
       let fs2 = builtin.tail_list(fs1)
@@ -169,13 +168,9 @@ fn parse_dvn_signers(d: Data) -> Option<List<types.Address32>> {
   if is_constr {
     let pr = builtin.un_constr_data(d)
     let fs = pr.2nd
-    let _f_vid = builtin.head_list(fs)
     let fs1 = builtin.tail_list(fs)
-    let _f_quorum = builtin.head_list(fs1)
     let fs2 = builtin.tail_list(fs1)
     let f_signers = builtin.head_list(fs2)
-    let fs3 = builtin.tail_list(fs2)
-    let _f_admin = builtin.head_list(fs3)
     let signers_data = builtin.un_list_data(f_signers)
     let signers = list.map(signers_data, fn(x) {
       let prx = builtin.un_constr_data(x)
@@ -210,7 +205,6 @@ fn parse_dvn_quorum(d: Data) -> Option<Int> {
   if is_constr {
     let pr = builtin.un_constr_data(d)
     let fs = pr.2nd
-    let _f_vid = builtin.head_list(fs)
     let fs1 = builtin.tail_list(fs)
     let f_quorum = builtin.head_list(fs1)
     let q = builtin.un_i_data(f_quorum)
