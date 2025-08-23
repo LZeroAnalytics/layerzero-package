@@ -36,9 +36,9 @@ validator uln302_send {
     _: Transaction,
   ) {
     case redeemer {
-      SetConfigExec { .. } -> true
-      SetConfigUln { .. } -> true
-      Send { .. } -> true
+      SetConfigExec(_) -> true
+      SetConfigUln(_) -> true
+      Send(_) -> true
     }
   }
 

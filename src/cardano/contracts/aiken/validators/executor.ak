@@ -44,7 +44,7 @@ validator executor {
     _: Transaction,
   ) {
     case redeemer {
-      CommitAndExecute { .. } -> true
+      CommitAndExecute(_) -> true
     }
   }
 

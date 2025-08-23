@@ -53,10 +53,10 @@ validator dvn {
     _: Transaction,
   ) {
     case redeemer {
-      SetSigner { .. } -> true
-      SetQuorum { .. } -> true
-      AssignJob { .. } -> true
-      Execute { .. } -> true
+      SetSigner(_) -> true
+      SetQuorum(_) -> true
+      AssignJob(_) -> true
+      Execute(_) -> true
     }
   }
 
