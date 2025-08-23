@@ -1,5 +1,4 @@
 use aiken/builtin
-use aiken/hash/blake2b
 use aiken/bytearray
 
 use layerzero/types
@@ -31,7 +30,7 @@ pub fn encode_header_v1(h: types.PacketHeaderV1) -> ByteArray {
 }
 
 pub fn payload_hash(guid: types.Guid, message: ByteArray) -> ByteArray {
-  blake2b.hash(bytearray.concat(unwrap_guid(guid), message))
+  builtin.blake2b_256(bytearray.concat(unwrap_guid(guid), message))
 }
 
 fn unwrap_guid(Guid(b)) -> ByteArray {
