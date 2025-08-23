@@ -1,17 +1,18 @@
+
 pub type Eid {
   Eid(Int)
 }
 
-pub type Address20 {
-  Address20(ByteArray)
+pub type Nonce {
+  Nonce(Int)
 }
 
 pub type Address32 {
   Address32(ByteArray)
 }
 
-pub type Nonce {
-  Nonce(Int)
+pub type Address20 {
+  Address20(ByteArray)
 }
 
 pub type Guid {
@@ -26,30 +27,6 @@ pub type Origin {
   }
 }
 
-pub type WorkerOption {
-  WorkerOption(ByteArray)
-}
-
-pub type VerificationState {
-  Verifiable
-  Verifying
-  NotVerifiable
-}
-
-pub type ExecutorConfig {
-  ExecutorConfig {
-    gas_limit: Int,
-    gas_for_fee_cap: Int,
-  }
-}
-
-pub type UlnConfig {
-  UlnConfig {
-    quorum: Int,
-    confirmations: Int,
-  }
-}
-
 pub type PacketHeaderV1 {
   PacketHeaderV1 {
     nonce: Nonce,
@@ -57,5 +34,40 @@ pub type PacketHeaderV1 {
     sender: Address32,
     dst_eid: Eid,
     receiver_b20: Address20,
+  }
+}
+
+pub type ExecutorConfig {
+  ExecutorConfig {
+    placeholder: Int
+  }
+}
+
+pub type UlnConfig {
+  UlnConfig {
+    confirmations: Int,
+    quorum: Int
+  }
+}
+
+pub type WorkerOption {
+  WorkerOption {
+    key: ByteArray,
+    value: ByteArray
+  }
+}
+
+pub type GuidAndMessage {
+  GuidAndMessage {
+    guid: Guid,
+    message: ByteArray
+  }
+}
+
+pub type AttestationDatum {
+  AttestationDatum {
+    header_hash: ByteArray,
+    payload_hash: ByteArray,
+    signer_count: Int
   }
 }
