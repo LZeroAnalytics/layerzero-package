@@ -48,7 +48,7 @@ validator endpoint {
     _: OutputReference,
     _: Transaction,
   ) {
-    case redeemer {
+    when redeemer is {
       SetConfig(_) -> true
       Verify(_) -> true
       LzReceive(_) -> true

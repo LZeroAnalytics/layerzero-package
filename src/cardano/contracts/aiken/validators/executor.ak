@@ -43,7 +43,7 @@ validator executor {
     _: OutputReference,
     _: Transaction,
   ) {
-    case redeemer {
+    when redeemer is {
       CommitAndExecute(_) -> true
     }
   }

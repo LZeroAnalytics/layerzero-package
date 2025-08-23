@@ -52,7 +52,7 @@ validator dvn {
     _: OutputReference,
     _: Transaction,
   ) {
-    case redeemer {
+    when redeemer is {
       SetSigner(_) -> true
       SetQuorum(_) -> true
       AssignJob(_) -> true

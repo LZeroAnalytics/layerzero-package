@@ -35,7 +35,7 @@ validator uln302_send {
     _: OutputReference,
     _: Transaction,
   ) {
-    case redeemer {
+    when redeemer is {
       SetConfigExec(_) -> true
       SetConfigUln(_) -> true
       Send(_) -> true

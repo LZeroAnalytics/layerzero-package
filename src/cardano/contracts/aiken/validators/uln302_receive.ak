@@ -34,7 +34,7 @@ validator uln302_receive {
     _: OutputReference,
     _: Transaction,
   ) {
-    case redeemer {
+    when redeemer is {
       SetConfigUln(_) -> true
       CommitVerification(_) -> true
       Verify(_) -> true
