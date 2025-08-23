@@ -48,7 +48,7 @@ validator endpoint {
       Verify { origin: og, receiver: rcvr, payload_hash: _ } -> {
         when datum is {
           Some(Channel {
-            origin: ch_og,
+            origin: _ch_og,
             receiver: ch_rcvr,
             lazy_inbound_nonce: ch_nonce,
             executed: _,
@@ -62,7 +62,7 @@ validator endpoint {
       LzReceive { origin: og, receiver: rcvr, guid: _, message: _, extra_data: _ } -> {
         when datum is {
           Some(Channel {
-            origin: ch_og,
+            origin: _ch_og,
             receiver: ch_rcvr,
             lazy_inbound_nonce: ch_nonce,
             executed: True,
