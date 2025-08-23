@@ -2,16 +2,13 @@ use aiken/builtin
 use cardano/transaction.{OutputReference, Transaction}
 
 use layerzero/types
-use layerzero/codec
+use layerzero/endpoint_helpers
 
 pub type EndpointDatum {
-  EndpointDatum {
+  Global {
     local_eid: types.Eid
   }
-}
-
-pub type ChannelDatum {
-  ChannelDatum {
+  Channel {
     origin: types.Origin,
     receiver: types.Address20,
     lazy_inbound_nonce: types.Nonce,
@@ -49,8 +46,34 @@ validator endpoint {
   ) {
     when redeemer is {
       SetConfig { oapp: _, dst_eid: _, config_type: _, config: _ } -> True
-      Verify { origin: _, receiver: _, payload_hash: _ } -> True
-      LzReceive { origin: _, receiver: _, guid: _, message: _, extra_data: _ } -> True
+      Verify { origin: og, receiver: rcvr, payload_hash: _ } -> {
+        when datum is {
+          Some(Channel {
+            origin: ch_og,
+            receiver: ch_rcvr,
+            lazy_inbound_nonce: ch_nonce,
+            executed: _,
+          }) -> {
+            let types.Origin { src_eid: _, sender: _, nonce: in_nonce } = og
+            ch_rcvr == rcvr && endpoint_helpers.nonce_next_ok(ch_nonce, in_nonce)
+          }
+          _ -> False
+        }
+      }
+      LzReceive { origin: og, receiver: rcvr, guid: _, message: _, extra_data: _ } -> {
+        when datum is {
+          Some(Channel {
+            origin: ch_og,
+            receiver: ch_rcvr,
+            lazy_inbound_nonce: ch_nonce,
+            executed: True,
+          }) -> {
+            let types.Origin { src_eid: _, sender: _, nonce: in_nonce } = og
+            ch_rcvr == rcvr && endpoint_helpers.nonce_next_ok(ch_nonce, in_nonce)
+          }
+          _ -> False
+        }
+      }
     }
   }
 
