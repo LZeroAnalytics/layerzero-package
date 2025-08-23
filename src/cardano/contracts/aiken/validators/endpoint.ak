@@ -40,11 +40,13 @@ pub type EndpointRedeemer {
   }
 }
 
-pub fn validator(d: EndpointDatum, r: EndpointRedeemer, ctx: builtin.ScriptContext) -> Bool {
-  builtin.trace("endpoint:dispatch")
-  case r {
-    SetConfig { .. } -> true
-    Verify { .. } -> true
-    LzReceive { .. } -> true
+validator endpoint {
+  fn spend(d: EndpointDatum, r: EndpointRedeemer, ctx: builtin.ScriptContext) -> Bool {
+    builtin.trace("endpoint:dispatch")
+    case r {
+      SetConfig { .. } -> true
+      Verify { .. } -> true
+      LzReceive { .. } -> true
+    }
   }
 }

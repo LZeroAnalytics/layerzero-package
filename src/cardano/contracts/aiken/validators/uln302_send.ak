@@ -23,15 +23,17 @@ pub type SendRedeemer {
     cfg: types.UlnConfig,
   }
   Send {
-    options: List(types.WorkerOption),
+    options: List<types.WorkerOption>,
   }
 }
 
-pub fn validator(d: SendDatum, r: SendRedeemer, ctx: builtin.ScriptContext) -> Bool {
-  builtin.trace("uln302_send:dispatch")
-  case r {
-    SetConfigExec { .. } -> true
-    SetConfigUln { .. } -> true
-    Send { .. } -> true
+validator uln302_send {
+  fn spend(d: SendDatum, r: SendRedeemer, ctx: builtin.ScriptContext) -> Bool {
+    builtin.trace("uln302_send:dispatch")
+    case r {
+      SetConfigExec { .. } -> true
+      SetConfigUln { .. } -> true
+      Send { .. } -> true
+    }
   }
 }

@@ -31,13 +31,15 @@ pub type ExecutorRedeemer {
   CommitAndExecute {
     receive_lib: ByteArray,
     lz_receive_param: LzReceiveParam,
-    native_drops: List(NativeDropParam),
+    native_drops: List<NativeDropParam>,
   }
 }
 
-pub fn validator(d: ExecutorDatum, r: ExecutorRedeemer, ctx: builtin.ScriptContext) -> Bool {
-  builtin.trace("executor:commit_and_execute")
-  case r {
-    CommitAndExecute { .. } -> true
+validator executor {
+  fn spend(d: ExecutorDatum, r: ExecutorRedeemer, ctx: builtin.ScriptContext) -> Bool {
+    builtin.trace("executor:commit_and_execute")
+    case r {
+      CommitAndExecute { .. } -> true
+    }
   }
 }

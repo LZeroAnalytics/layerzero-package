@@ -26,11 +26,13 @@ pub type ReceiveRedeemer {
   }
 }
 
-pub fn validator(d: ReceiveDatum, r: ReceiveRedeemer, ctx: builtin.ScriptContext) -> Bool {
-  builtin.trace("uln302_receive:dispatch")
-  case r {
-    SetConfigUln { .. } -> true
-    CommitVerification { .. } -> true
-    Verify { .. } -> true
+validator uln302_receive {
+  fn spend(d: ReceiveDatum, r: ReceiveRedeemer, ctx: builtin.ScriptContext) -> Bool {
+    builtin.trace("uln302_receive:dispatch")
+    case r {
+      SetConfigUln { .. } -> true
+      CommitVerification { .. } -> true
+      Verify { .. } -> true
+    }
   }
 }

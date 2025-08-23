@@ -40,16 +40,18 @@ pub type DvnRedeemer {
     options: ByteArray,
   }
   Execute {
-    params: List(ExecuteParam),
+    params: List<ExecuteParam>,
   }
 }
 
-pub fn validator(d: DvnDatum, r: DvnRedeemer, ctx: builtin.ScriptContext) -> Bool {
-  builtin.trace("dvn:dispatch")
-  case r {
-    SetSigner { .. } -> true
-    SetQuorum { .. } -> true
-    AssignJob { .. } -> true
-    Execute { .. } -> true
+validator dvn {
+  fn spend(d: DvnDatum, r: DvnRedeemer, ctx: builtin.ScriptContext) -> Bool {
+    builtin.trace("dvn:dispatch")
+    case r {
+      SetSigner { .. } -> true
+      SetQuorum { .. } -> true
+      AssignJob { .. } -> true
+      Execute { .. } -> true
+    }
   }
 }
