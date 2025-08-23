@@ -4,10 +4,15 @@ use cardano/transaction.{Datum, Output, OutputReference, Transaction}
 
 use layerzero/types
 use layerzero/codec
+use layerzero/dvn_helpers
+use aiken/primitive/bytearray
 
 pub type ReceiveDatum {
   ReceiveDatum {
-    local_eid: types.Eid
+    local_eid: types.Eid,
+    dvn_vid: Int,
+    required_quorum: Int,
+    required_confirmations: Int,
   }
 }
 
@@ -110,6 +115,53 @@ fn has_matching_endpoint_verify_output(
     })
 }
 
+fn find_sigs(outputs: List<Output>, hh: ByteArray, ph: ByteArray) -> Option<(List<ByteArray>, List<types.Address32>)> {
+  list.foldr(
+    outputs,
+    None,
+    fn(o, acc) {
+      when acc is {
+        Some(_) -> acc
+        None -> {
+          when o.datum is {
+            Datum.InlineDatum(d) -> {
+              let is_constr = builtin.choose_data(d, True, False, False, False, False)
+              if is_constr {
+                let pr = builtin.un_constr_data(d)
+                let tag = pr.1st
+                if tag == 1 {
+                  let fs = pr.2nd
+                  let f0 = builtin.head_list(fs)
+                  let fs1 = builtin.tail_list(fs)
+                  let f1 = builtin.head_list(fs1)
+                  let fs2 = builtin.tail_list(fs1)
+                  let f2 = builtin.head_list(fs2)
+                  let fs3 = builtin.tail_list(fs2)
+                  let f3 = builtin.head_list(fs3)
+                  let ah = builtin.un_b_data(f0)
+                  let ap = builtin.un_b_data(f1)
+                  let sigs = list.map(builtin.un_list_data(f2), fn(x) { builtin.un_b_data(x) })
+                  let pubs = list.map(builtin.un_list_data(f3), fn(x) {
+                    let prx = builtin.un_constr_data(x)
+                    let b = builtin.un_b_data(builtin.head_list(prx.2nd))
+                    types.Address32(b)
+                  })
+                  if ah == hh && ap == ph { Some((sigs, pubs)) } else { None }
+                } else {
+                  None
+                }
+              } else {
+                None
+              }
+            }
+            _ -> None
+          }
+        }
+      }
+    },
+  )
+}
+
 validator uln302_receive {
   spend(
     datum: Option<ReceiveDatum>,
@@ -121,13 +173,13 @@ validator uln302_receive {
       SetConfigUln { oapp: _, src_eid: _, cfg: _ } -> True
       CommitVerification { packet_header: ph, payload_hash: _ } -> {
         when datum is {
-          Some(ReceiveDatum { local_eid: le }) -> codec.assert_header_v1(ph, le)
+          Some(ReceiveDatum { local_eid: le, dvn_vid: _, required_quorum: _, required_confirmations: _ }) -> codec.assert_header_v1(ph, le)
           None -> False
         }
       }
-      Verify { packet_header: ph, payload_hash: plh, confirmations: _ } -> {
+      Verify { packet_header: ph, payload_hash: plh, confirmations: confs } -> {
         when datum is {
-          Some(ReceiveDatum { local_eid: le }) -> {
+          Some(ReceiveDatum { local_eid: le, dvn_vid: _vid, required_quorum: q, required_confirmations: req_c }) -> {
             let ok_hdr = codec.assert_header_v1(ph, le)
             let hh = codec.header_hash_v1(ph)
             let ok_att = has_matching_attestation(tx.outputs, hh, plh)
@@ -135,7 +187,16 @@ validator uln302_receive {
             let rcvr = codec.header_receiver_b20(ph)
             let prev_nonce = types.Nonce(in_i - 1)
             let ok_ep = has_matching_endpoint_verify_output(tx.outputs, rcvr, prev_nonce)
-            ok_hdr && ok_att && ok_ep
+            let ok_conf = confs >= req_c
+            when find_sigs(tx.outputs, hh, plh) is {
+              Some((sigs, pubs)) -> {
+                let msg = bytearray.concat(hh, plh)
+                let unique = dvn_helpers.unique_signers(pubs)
+                let ok_ms = dvn_helpers.verify_multisig(msg, pubs, sigs, q)
+                ok_hdr && ok_att && ok_ep && ok_conf && unique && ok_ms
+              }
+              None -> False
+            }
           }
           None -> False
         }
