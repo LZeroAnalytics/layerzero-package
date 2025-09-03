@@ -10,7 +10,7 @@ def run(plan, args):
 
     # Check input params
     networks = input_parser.input_parser(plan, args)
-    connections = args["connections"]
+    connections = input_parser.compute_connections(args, networks)
 
     # Deploy DVN contract
     dvn_addresses = dvn_contract_deployer.deploy_contract(plan, networks, connections)
@@ -43,49 +43,6 @@ def run(plan, args):
         network_dvn_map[net.name] = dvn_addresses[i]
         network_exec_map[net.name] = executor_addresses[i]
 
-    # For each connection, launch a DVN and executor service between the source and destination networks.
-    for conn in connections:
-        src = None
-        dst = None
-        for net in networks:
-            if net.name == conn["from"]:
-                src = net
-            if net.name == conn["to"]:
-                dst = net
-
-        dvn_deployer.add_dvn(
-            plan,
-            src_name = src.name,
-            src_chain_id = src.chain_id,
-            src_rpc_url = src.rpc,
-            src_endpoint = src.endpoint,
-            src_trusted_send_lib = src.trusted_send_lib,
-            src_dvn_addr = network_dvn_map[src.name],
-            dst_name = dst.name,
-            dst_chain_id = dst.chain_id,
-            dst_rpc_url = dst.rpc,
-            dst_endpoint = dst.endpoint,
-            dst_trusted_receive_lib = dst.trusted_receive_lib,
-            dst_dvn_addr = network_dvn_map[dst.name],
-            dst_private_key = dst.private_key,
-            redis_url = dvn_redis_url,
-        )
-
-        executor_deployer.add_executor(
-            plan,
-            src_name = src.name,
-            src_chain_id = src.chain_id,
-            src_rpc_url = src.rpc,
-            src_endpoint = src.endpoint,
-            src_trusted_send_lib = src.trusted_send_lib,
-            src_executor_addr = network_exec_map[src.name],
-            dst_name = dst.name,
-            dst_chain_id = dst.chain_id,
-            dst_rpc_url = dst.rpc,
-            dst_endpoint = dst.endpoint,
-            dst_private_key = dst.private_key,
-            redis_url = executor_redis_url,
-        )
 
     # Add server to serve contract addresses for front-end
     address_server.add_server(plan, dvn_addresses, executor_addresses)

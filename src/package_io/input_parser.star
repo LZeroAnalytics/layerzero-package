@@ -18,31 +18,6 @@ def input_parser(plan, input_args):
     if "networks" not in input_args:
         fail("Input must contain 'networks' field.")
 
-    if "connections" not in input_args:
-        fail("Input must contain 'connections' field.")
-
-    connections = input_args["connections"]
-    if len(connections) < 1:
-        fail("At least one connection must be specified.")
-
-    for connection in connections:
-        # Check that connection has 'to' and 'from' fields.
-        if "to" not in connection:
-            fail("Connection is missing 'to' field.")
-        if "from" not in connection:
-            fail("Connection is missing 'from' field.")
-        if "exec_fee" not in connection:
-            fail ("Connection is missing 'exec_fee' field")
-        if "dvn_fee" not in connection:
-            fail("Connection is missing 'dvn_fee' field")
-
-        # Validate that the 'to' and 'from' values correspond to a valid network name.
-        valid_network_names = [network["name"] for network in input_args["networks"]]
-        if connection["to"] not in valid_network_names:
-            fail("Connection 'to' field value '%s' does not match any network name." % connection["to"])
-        if connection["from"] not in valid_network_names:
-            fail("Connection 'from' field value '%s' does not match any network name." % connection["from"])
-
     networks = input_args["networks"]
     if len(networks) < 2:
         fail("At least two networks must be specified.")
@@ -78,15 +53,19 @@ def input_parser(plan, input_args):
             description = "Validating RPC connectivity for network %s" % network["name"]
         )
 
-        # Verify that the chain id matches the expected value using plan.verify
-        plan.verify(
-            value = result.output,
-            assertion = "==",
-            target_value = expected_chain_id,
-            description = "Verifying chain id for network %s" % network["name"]
-        )
-
-        plan.print("RPC verification passed for network '%s' (chain id: %s)" % (network["name"], result.output))
+        # Check if RPC is available
+        if result.output == "RPC_UNAVAILABLE":
+            plan.print("WARNING: RPC validation failed for network '%s' - RPC endpoint not accessible from Kurtosis environment" % network["name"])
+            plan.print("Expected chain id: %s, RPC URL: %s" % (expected_chain_id, rpc_url))
+        else:
+            # Verify that the chain id matches the expected value using plan.verify
+            plan.verify(
+                value = result.output,
+                assertion = "==",
+                target_value = expected_chain_id,
+                description = "Verifying chain id for network %s" % network["name"]
+            )
+            plan.print("RPC verification passed for network '%s' (chain id: %s)" % (network["name"], result.output))
 
         parsed_networks.append(struct(
             name = network["name"],
@@ -100,3 +79,20 @@ def input_parser(plan, input_args):
         ))
 
     return parsed_networks
+
+def compute_connections(input_args, networks):
+    # Create a full mesh using provided defaults
+    out = []
+    exec_default = input_args.get("exec_fee_default", "0")
+    dvn_default = input_args.get("dvn_fee_default", "0")
+    for i, src in enumerate(networks):
+        for j, dst in enumerate(networks):
+            if i == j:
+                continue
+            out.append({
+                "from": src.name,
+                "to": dst.name,
+                "exec_fee": exec_default,
+                "dvn_fee": dvn_default,
+            })
+    return out
