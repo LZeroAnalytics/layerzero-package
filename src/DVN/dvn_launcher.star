@@ -1,61 +1,79 @@
 def add_dvn(
         plan,
-        src_name,
-        src_chain_id,
-        src_rpc_url,
-        src_endpoint,
-        src_trusted_send_lib,
-        src_dvn_addr,
-        dst_name,
-        dst_chain_id,
-        dst_rpc_url,
-        dst_endpoint,
-        dst_trusted_receive_lib,
-        dst_dvn_addr,
-        dst_private_key,
+        network_a,
+        network_b,
+        network_dvn_map,
         redis_url,
 ):
+    """
+    Creates DVN services for a network pair.
+    """
+    
+    # Create a deterministic service name (alphabetically sorted to avoid duplicates)
+    networks_sorted = sorted([network_a.name, network_b.name])
+    service_name_base = "{}-{}".format(networks_sorted[0], networks_sorted[1])
+    
+    # DVN Watcher - monitors both networks for DVN events
     watcher = plan.add_service(
-        name = "dvn-watcher-{}-{}".format(src_name, dst_name),
+        name = "dvn-watcher-{}".format(service_name_base),
         config = ServiceConfig(
             image = "tiljordan/layerzero-dvn-watcher:v1.0.2",
             ports = {},
             entrypoint = ["node", "dist/index.js"],
             cmd = [],
             env_vars = {
-                "SRC_NAME": src_name,
-                "SRC_CHAIN_ID": src_chain_id,
-                "SRC_RPC_URL": src_rpc_url,
-                "SRC_ENDPOINT": src_endpoint,
-                "SRC_TRUSTED_SEND_LIB": src_trusted_send_lib,
-                "SRC_DVN_ADDR": src_dvn_addr,
-                "DST_NAME": dst_name,
-                "DST_CHAIN_ID": dst_chain_id,
-                "DST_RPC_URL": dst_rpc_url,
-                "DST_ENDPOINT": dst_endpoint,
+                # Network A configuration
+                "NETWORK_A_NAME": network_a.name,
+                "NETWORK_A_CHAIN_ID": str(network_a.chain_id),
+                "NETWORK_A_RPC_URL": network_a.rpc,
+                "NETWORK_A_ENDPOINT": network_a.endpoint,
+                "NETWORK_A_TRUSTED_SEND_LIB": network_a.trusted_send_lib,
+                
+                # Network B configuration
+                "NETWORK_B_NAME": network_b.name,
+                "NETWORK_B_CHAIN_ID": str(network_b.chain_id),
+                "NETWORK_B_RPC_URL": network_b.rpc,
+                "NETWORK_B_ENDPOINT": network_b.endpoint,
+                "NETWORK_B_TRUSTED_SEND_LIB": network_b.trusted_send_lib,
+                
                 "REDIS_URL": redis_url,
             },
         ),
-        description = "Adding DVN watcher for channel {} -> {}".format(src_name, dst_name)
+        description = "Adding DVN watcher for networks {} <-> {}".format(network_a.name, network_b.name)
     )
 
+    # DVN Verifier - verifies for both networks
     verifier = plan.add_service(
-        name = "dvn-verifier-{}-{}".format(src_name, dst_name),
+        name = "dvn-verifier-{}".format(service_name_base),
         config = ServiceConfig(
             image = "tiljordan/layerzero-verifier:v1.0.2",
             ports = {},
             entrypoint = ["node", "dist/index.js"],
             cmd = [],
             env_vars = {
-                "NAME": dst_name,
-                "CHAIN_ID": dst_chain_id,
-                "RPC_URL": dst_rpc_url,
-                "TRUSTED_RECEIVE_LIB": dst_trusted_receive_lib,
-                "PRIVATE_KEY": dst_private_key,
-                "DVN_ADDR": dst_dvn_addr,
+                # Network A configuration
+                "NETWORK_A_NAME": network_a.name,
+                "NETWORK_A_CHAIN_ID": str(network_a.chain_id),
+                "NETWORK_A_RPC_URL": network_a.rpc,
+                "NETWORK_A_TRUSTED_RECEIVE_LIB": network_a.trusted_receive_lib,
+                "NETWORK_A_DVN_ADDRESSES": ",".join(network_dvn_map[network_a.name]),
+                "NETWORK_A_DVN_NAMES": ",".join(["DVN-{}".format(i+1) for i in range(len(network_dvn_map[network_a.name]))]),
+                "NETWORK_A_DVN_PRIVATE_KEYS": ",".join([network_a.private_key for _ in network_dvn_map[network_a.name]]),
+                
+                # Network B configuration
+                "NETWORK_B_NAME": network_b.name,
+                "NETWORK_B_CHAIN_ID": str(network_b.chain_id),
+                "NETWORK_B_RPC_URL": network_b.rpc,
+                "NETWORK_B_TRUSTED_RECEIVE_LIB": network_b.trusted_receive_lib,
+                "NETWORK_B_DVN_ADDRESSES": ",".join(network_dvn_map[network_b.name]),
+                "NETWORK_B_DVN_NAMES": ",".join(["DVN-{}".format(i+1) for i in range(len(network_dvn_map[network_b.name]))]),
+                "NETWORK_B_DVN_PRIVATE_KEYS": ",".join([network_b.private_key for _ in network_dvn_map[network_b.name]]),
+                
+                "USE_ALL_DVNS": "true",
                 "REDIS_URL": redis_url,
             },
         ),
-        description = "Adding verifier for channel {} -> {}".format(src_name, dst_name),
+        description = "Adding DVN verifier for networks {} <-> {}".format(network_a.name, network_b.name),
     )
+    
     return watcher, verifier

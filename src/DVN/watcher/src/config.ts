@@ -2,34 +2,30 @@ import {configDotenv} from "dotenv";
 
 configDotenv();
 
-export interface SourceChainConfig {
+export interface NetworkConfig {
     name: string;
     rpc: string;
     chainId: number,
     endpoint: `0x${string}`;
     trustedSendLib: `0x${string}`;
-    dvn: `0x${string}`;
 }
 
-export interface DestinationChainConfig {
-    name: string;
-    rpc: string;
-    chainId: number,
-    endpoint: `0x${string}`;
+export interface WatcherConfig {
+    networkA: NetworkConfig;
+    networkB: NetworkConfig;
 }
 
-export const sourceConfig: SourceChainConfig = {
-    name: process.env.SRC_NAME || "local",
-    chainId: Number(process.env.SRC_CHAIN_ID) || 1,
-    rpc: process.env.SRC_RPC_URL || "http://127.0.0.1:8545",
-    endpoint: process.env.SRC_ENDPOINT as `0x${string}`,
-    trustedSendLib: process.env.SRC_TRUSTED_SEND_LIB as `0x${string}`,
-    dvn: process.env.SRC_DVN_ADDR as `0x${string}`,
-};
+function parseNetworkConfig(prefix: 'NETWORK_A' | 'NETWORK_B'): NetworkConfig {
+    return {
+        name: process.env[`${prefix}_NAME`] || "unknown",
+        chainId: Number(process.env[`${prefix}_CHAIN_ID`]) || 1,
+        rpc: process.env[`${prefix}_RPC_URL`] || "http://127.0.0.1:8545",
+        endpoint: process.env[`${prefix}_ENDPOINT`] as `0x${string}`,
+        trustedSendLib: process.env[`${prefix}_TRUSTED_SEND_LIB`] as `0x${string}`,
+    };
+}
 
-export const destinationConfig: DestinationChainConfig = {
-    name: process.env.DST_NAME || "local",
-    chainId: Number(process.env.DST_CHAIN_ID) || 1,
-    rpc: process.env.DST_RPC_URL || "http://127.0.0.1:8545",
-    endpoint: process.env.DST_ENDPOINT as `0x${string}`,
+export const config: WatcherConfig = {
+    networkA: parseNetworkConfig('NETWORK_A'),
+    networkB: parseNetworkConfig('NETWORK_B'),
 };

@@ -26,12 +26,20 @@ export class PacketSentWatcher {
                     console.log("PacketSent event detected, tx:", log.transactionHash);
                     const event = await this.processLog(log);
                     if (event) {
-                        const dvnPaid = await this.queryDVNFeePaid(event);
-                        if (dvnPaid) {
-                            await this.redisClient.publish('packetEvents', JSON.stringify(event));
-                            console.log(`Published PacketSent event to Redis on 'packetEvents' channel as DVN fee is paid.`);
+                        const dvnResult = await this.queryDVNFeePaid(event);
+                        if (dvnResult.shouldProcess) {
+                            // Pass all DVN addresses to the verifier - let verifier decide which to use
+                            const enhancedEvent = {
+                                ...event,
+                                allDVNs: dvnResult.allDVNs,  // All DVN addresses from the event
+                                requiredDVNs: dvnResult.requiredDVNs,  // Required DVNs from OApp
+                                optionalDVNs: dvnResult.optionalDVNs   // Optional DVNs from OApp
+                            };
+                            
+                            await this.redisClient.publish('packetEvents', JSON.stringify(enhancedEvent));
+                            console.log(`Published PacketSent event to Redis on 'packetEvents' channel with ${dvnResult.allDVNs.length} DVN addresses.`);
                         } else {
-                            console.log(`No matching DVNFeePaid event found for tx: ${event.transactionHash}`);
+                            console.log(`No DVN fee paid for tx: ${event.transactionHash}`);
                         }
                     }
                 }
@@ -62,15 +70,17 @@ export class PacketSentWatcher {
         };
     }
 
-    private async queryDVNFeePaid(event: LZMessageEvent): Promise<boolean> {
+    private async queryDVNFeePaid(event: LZMessageEvent): Promise<{shouldProcess: boolean, allDVNs: string[], requiredDVNs: string[], optionalDVNs: string[]}> {
         const receipt = await this.client.getTransactionReceipt({hash: event.transactionHash as `0x${string}`});
         if (!receipt) {
             console.log(`[queryDVNFeePaid] Failed to retrieve transaction receipt for tx: ${event.transactionHash}`);
-            return false;
+            return { shouldProcess: false, allDVNs: [], requiredDVNs: [], optionalDVNs: [] };
         }
+        
         // Compute the DVNFeePaid event signature
         const dvnFeePaidEventSignature = keccak256(new TextEncoder().encode("DVNFeePaid(address[],address[],uint256[])"));
         const feePaidEvent = receipt.logs.find((log: any) => log.topics[0] === dvnFeePaidEventSignature);
+        
         if (feePaidEvent) {
             // Decode the event data using decodeAbiParameters
             const decodedData = decodeAbiParameters([
@@ -80,15 +90,22 @@ export class PacketSentWatcher {
             ], feePaidEvent.data);
             const requiredDVNs = decodedData[0] as string[];
             const optionalDVNs = decodedData[1] as string[];
-            const dvnAddress = sourceConfig.dvn.toLowerCase();
-            if (requiredDVNs.map(addr => addr.toLowerCase()).includes(dvnAddress) ||
-                optionalDVNs.map(addr => addr.toLowerCase()).includes(dvnAddress)) {
-                return true;
-            } else {
-                console.log(`[queryDVNFeePaid] DVN address ${sourceConfig.dvn} not found in event parameters.`);
-                return false;
-            }
+            
+            // Get all DVN addresses from the event
+            const allDVNs = [...requiredDVNs, ...optionalDVNs].map(addr => addr.toLowerCase());
+            
+            console.log(`[queryDVNFeePaid] Found DVN fee paid event with ${allDVNs.length} DVN addresses:`, allDVNs);
+            console.log(`[queryDVNFeePaid] Required DVNs:`, requiredDVNs);
+            console.log(`[queryDVNFeePaid] Optional DVNs:`, optionalDVNs);
+            
+            return { 
+                shouldProcess: true, 
+                allDVNs,
+                requiredDVNs: requiredDVNs.map(addr => addr.toLowerCase()),
+                optionalDVNs: optionalDVNs.map(addr => addr.toLowerCase())
+            };
         }
-        return false;
+        
+        return { shouldProcess: false, allDVNs: [], requiredDVNs: [], optionalDVNs: [] };
     }
 }
