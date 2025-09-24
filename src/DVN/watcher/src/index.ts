@@ -3,42 +3,42 @@ import { config as dotenvConfig } from "dotenv";
 import { createClient, RedisClientType } from "redis";
 import { PacketSentWatcher } from "./watchers/PacketSentWatcher";
 import { ReceiveLibHandler } from "./handlers/ReceiveLibHandler";
-import {destinationConfig, sourceConfig} from "./config";
+import {config} from "./config";
 
 dotenvConfig();
 
 async function main() {
 
-    const sourceChain = defineChain({
-        id: Number(sourceConfig.chainId),
-        name: sourceConfig.name,
+    const networkAChain = defineChain({
+        id: Number(config.networkA.chainId),
+        name: config.networkA.name,
         nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
         rpcUrls: {
             default: {
-                http: [sourceConfig.rpc],
+                http: [config.networkA.rpc],
             },
         }
     });
 
-    const destinationChain = defineChain({
-        id: Number(destinationConfig.chainId),
-        name: destinationConfig.name,
+    const networkBChain = defineChain({
+        id: Number(config.networkB.chainId),
+        name: config.networkB.name,
         nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
         rpcUrls: {
             default: {
-                http: [destinationConfig.rpc],
+                http: [config.networkB.rpc],
             },
         }
     });
 
-    const sourceClient = createPublicClient({
-        chain: sourceChain,
-        transport: http(sourceConfig.rpc),
+    const networkAClient = createPublicClient({
+        chain: networkAChain,
+        transport: http(config.networkA.rpc),
     });
 
-    const destinationClient = createPublicClient({
-        chain: destinationChain,
-        transport: http(destinationConfig.rpc),
+    const networkBClient = createPublicClient({
+        chain: networkBChain,
+        transport: http(config.networkB.rpc),
     });
 
     const redisSubscribeClient: RedisClientType<any, any> = createClient({
@@ -49,12 +49,17 @@ async function main() {
     const redisPublishClient: RedisClientType<any, any> = redisSubscribeClient.duplicate();
     await redisPublishClient.connect();
 
-    const packetSentWatcher = new PacketSentWatcher(sourceClient, redisPublishClient);
-    const receiveLibHandler = new ReceiveLibHandler(destinationClient, redisSubscribeClient, redisPublishClient);
+    // Create watchers for both networks (bidirectional)
+    const packetSentWatcherA = new PacketSentWatcher(networkAClient, redisPublishClient, config.networkA.endpoint);
+    const packetSentWatcherB = new PacketSentWatcher(networkBClient, redisPublishClient, config.networkB.endpoint);
+    const receiveLibHandlerA = new ReceiveLibHandler(networkAClient, redisSubscribeClient, redisPublishClient);
+    const receiveLibHandlerB = new ReceiveLibHandler(networkBClient, redisSubscribeClient, redisPublishClient);
 
     // Start the components for handling each step of the workflow
-    packetSentWatcher.start();
-    receiveLibHandler.start();
+    packetSentWatcherA.start();
+    packetSentWatcherB.start();
+    receiveLibHandlerA.start();
+    receiveLibHandlerB.start();
 
     console.log("All event handlers started. Listening for events...");
     process.stdin.resume();

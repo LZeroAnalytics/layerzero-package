@@ -2,7 +2,7 @@ import {RedisClientType} from "redis";
 import {abi as endpointABI} from "../abis/EndpointV2";
 import {abi as receiveLibABI} from "../abis/ReceiveUln302";
 import {keccak256, PublicClient, getAddress} from "viem";
-import {destinationConfig} from "../config";
+import {config} from "../config";
 import {abi as sendUlnABI} from "../abis/SendUln302";
 
 export class PayloadVerifiedHandler {
@@ -34,7 +34,7 @@ export class PayloadVerifiedHandler {
         try {
             // Retrieve the receive library from the endpoint contract.
             const result = await this.client.readContract({
-                address: destinationConfig.endpoint,
+                address: config.networkB.endpoint,
                 abi: endpointABI,
                 functionName: "getReceiveLibrary",
             args: [normalizedReceiver, srcEid],

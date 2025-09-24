@@ -1,0 +1,3 @@
+[submodule "src/DVN/dvn-contract/lib/LayerZero"]
+	path = src/DVN/dvn-contract/lib/LayerZero
+	url = https://github.com/LayerZero-Labs/LayerZero

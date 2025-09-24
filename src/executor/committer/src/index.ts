@@ -2,30 +2,49 @@ import {Account, defineChain, http, HttpTransport, WalletClient, Chain, createWa
 import { config as dotenvConfig } from "dotenv";
 import { LayerZeroCommitter } from "./LayerZeroCommitter";
 import {createClient, RedisClientType} from "redis";
-import {chainConfig} from "./config";
+import {config} from "./config";
 import {privateKeyToAccount} from "viem/accounts";
 
 dotenvConfig();
 
 async function main() {
 
-    const chain = defineChain({
-        id: chainConfig.chainId,
-        name: chainConfig.name,
+    // Create wallet clients for both networks (bidirectional)
+    const chainA = defineChain({
+        id: config.networkA.chainId,
+        name: config.networkA.name,
         nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
         rpcUrls: {
             default: {
-                http: [chainConfig.rpc],
+                http: [config.networkA.rpc],
             },
         }
     });
 
-    const account = privateKeyToAccount(chainConfig.privateKey);
+    const chainB = defineChain({
+        id: config.networkB.chainId,
+        name: config.networkB.name,
+        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+        rpcUrls: {
+            default: {
+                http: [config.networkB.rpc],
+            },
+        }
+    });
 
-    const walletClient: WalletClient<HttpTransport, Chain, Account> = createWalletClient({
-        chain,
-        transport: http(chainConfig.rpc),
-        account,
+    const accountA = privateKeyToAccount(config.networkA.privateKey);
+    const accountB = privateKeyToAccount(config.networkB.privateKey);
+
+    const walletClientA: WalletClient<HttpTransport, Chain, Account> = createWalletClient({
+        chain: chainA,
+        transport: http(config.networkA.rpc),
+        account: accountA,
+    });
+
+    const walletClientB: WalletClient<HttpTransport, Chain, Account> = createWalletClient({
+        chain: chainB,
+        transport: http(config.networkB.rpc),
+        account: accountB,
     });
 
     const redisSubscribeClient: RedisClientType<any, any> = createClient({
@@ -36,9 +55,12 @@ async function main() {
     const redisPublishClient: RedisClientType<any, any> = redisSubscribeClient.duplicate();
     redisPublishClient.connect();
 
-    const committer = new LayerZeroCommitter(walletClient, redisSubscribeClient, redisPublishClient);
+    // Create committers for both networks
+    const committerA = new LayerZeroCommitter(walletClientA, redisSubscribeClient, redisPublishClient);
+    const committerB = new LayerZeroCommitter(walletClientB, redisSubscribeClient, redisPublishClient);
 
-    committer.start();
+    committerA.start();
+    committerB.start();
 
     console.log("LayerZero Committer is now listening for events to commit...");
     process.stdin.resume();

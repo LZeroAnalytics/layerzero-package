@@ -1,0 +1,120 @@
+# Example 1: Single Network with Multiple DVNs
+networks:
+  - name: "ethereum"
+    chain_id: 1
+    rpc: "https://eth.llamarpc.com"
+    endpoint: "0x1a44076050125825900e736c501f859c50fE728c"
+    trusted_send_lib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+    trusted_receive_lib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+    private_key: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+    eid: 30101
+    dvnAddresses:
+      - "0x589dedbd617e0cbcb916a9223f4d1300c294236b"  # LayerZero DVN
+      - "0x1234567890abcdef1234567890abcdef12345678"  # Google DVN
+      - "0xabcdef1234567890abcdef1234567890abcdef12"  # Nethermind DVN
+  - name: "polygon"
+    chain_id: 137
+    rpc: "https://polygon.llamarpc.com"
+    endpoint: "0x1a44076050125825900e736c501f859c50fE728c"
+    trusted_send_lib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+    trusted_receive_lib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+    private_key: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+    eid: 30109
+    dvnAddresses:
+      - "0x1111111111111111111111111111111111111111"  # LayerZero DVN
+      - "0x2222222222222222222222222222222222222222"  # Chainlink DVN
+
+connections:
+  - from: "ethereum"
+    to: "polygon"
+  - from: "polygon"
+    to: "ethereum"
+
+
+# Example 2: Multiple Networks with Multiple DVNs per Network
+# networks:
+#   - name: "ethereum"
+#     chainId: 1
+#     rpcUrl: "https://eth.llamarpc.com"
+#     endpoint: "0x1a44076050125825900e736c501f859c50fE728c"
+#     trustedSendLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#     trustedReceiveLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#     dvnAddresses:
+#       - "0x589dedbd617e0cbcb916a9223f4d1300c294236b"  # LayerZero DVN
+#       - "0x1234567890abcdef1234567890abcdef12345678"  # Google DVN
+#       - "0xabcdef1234567890abcdef1234567890abcdef12"  # Nethermind DVN
+#   - name: "polygon"
+#     chainId: 137
+#     rpcUrl: "https://polygon.llamarpc.com"
+#     endpoint: "0x1a44076050125825900e736c501f859c50fE728c"
+#     trustedSendLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#     trustedReceiveLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#     dvnAddresses:
+#       - "0x1111111111111111111111111111111111111111"  # LayerZero DVN
+#       - "0x2222222222222222222222222222222222222222"  # Chainlink DVN
+#   - name: "arbitrum"
+#     chainId: 42161
+#     rpcUrl: "https://arbitrum.llamarpc.com"
+#     endpoint: "0x1a44076050125825900e736c501f859c50fE728c"
+#     trustedSendLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#     trustedReceiveLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#     dvnAddresses:
+#       - "0x3333333333333333333333333333333333333333"  # LayerZero DVN
+#       - "0x4444444444444444444444444444444444444444"  # Nethermind DVN
+
+# Example 3: Multiple Networks with Multiple DVNs per Network
+# networks:
+#   - name: "ethereum"
+#     chainId: 1
+#     rpcUrl: "https://eth.llamarpc.com"
+#     endpoint: "0x1a44076050125825900e736c501f859c50fE728c"
+#     trustedSendLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#     trustedReceiveLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#   - name: "polygon"
+#     chainId: 137
+#     rpcUrl: "https://polygon.llamarpc.com"
+#     endpoint: "0x1a44076050125825900e736c501f859c50fE728c"
+#     trustedSendLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#     trustedReceiveLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+
+# dvn_addresses:
+#   - "0x589dedbd617e0cbcb916a9223f4d1300c294236b"  # Ethereum DVN 1
+#   - "0x1234567890abcdef1234567890abcdef12345678"  # Polygon DVN 1
+
+# Example 4: Testnet Configuration
+# networks:
+#   - name: "ethereum-sepolia"
+#     chainId: 11155111
+#     rpcUrl: "https://sepolia.infura.io/v3/YOUR_INFURA_KEY"
+#     endpoint: "0x6EDCE65403992e310A62460808c4b910D972f10f"
+#     trustedSendLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#     trustedReceiveLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#   - name: "polygon-mumbai"
+#     chainId: 80001
+#     rpcUrl: "https://polygon-mumbai.infura.io/v3/YOUR_INFURA_KEY"
+#     endpoint: "0x6EDCE65403992e310A62460808c4b910D972f10f"
+#     trustedSendLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+#     trustedReceiveLib: "0x9d7e4c5321c4c7e8b4e8b4e8b4e8b4e8b4e8b4e8b"
+
+# dvn_addresses:
+#   - "0x589dedbd617e0cbcb916a9223f4d1300c294236b"  # Sepolia DVN
+#   - "0x1234567890abcdef1234567890abcdef12345678"  # Mumbai DVN
+
+# Example 5: Local Development
+# networks:
+#   - name: "local-ethereum"
+#     chainId: 31337
+#     rpcUrl: "http://127.0.0.1:8545"
+#     endpoint: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+#     trustedSendLib: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+#     trustedReceiveLib: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+#   - name: "local-polygon"
+#     chainId: 31338
+#     rpcUrl: "http://127.0.0.1:8546"
+#     endpoint: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+#     trustedSendLib: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+#     trustedReceiveLib: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+
+# dvn_addresses:
+#   - "0x589dedbd617e0cbcb916a9223f4d1300c294236b"  # Local Ethereum DVN
+#   - "0x1234567890abcdef1234567890abcdef12345678"  # Local Polygon DVN

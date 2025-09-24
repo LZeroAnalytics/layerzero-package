@@ -697,7 +697,7 @@ export const abi = [
             {
                 "indexed": false,
                 "internalType": "bytes",
-                "name": "encodedPayload",
+                "name": "encodedPacket",
                 "type": "bytes"
             },
             {

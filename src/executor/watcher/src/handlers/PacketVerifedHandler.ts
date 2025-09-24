@@ -1,7 +1,7 @@
 import {RedisClientType} from "redis";
 import {abi as endpointABI} from "../abis/EndpointV2";
 import {PublicClient, keccak256, getAddress} from "viem";
-import {destinationConfig} from "../config";
+import {config} from "../config";
 
 export class PacketVerifiedHandler {
 
@@ -32,7 +32,7 @@ export class PacketVerifiedHandler {
         const normalizedReceiver = getAddress(receiver.length === 66 ? `0x${receiver.slice(-40)}` : receiver);
         try {
             this.client.watchContractEvent({
-                address: destinationConfig.endpoint,
+                address: config.networkB.endpoint,
                 abi: endpointABI,
                 eventName: "PacketVerified",
                 onLogs: async (logs) => {
@@ -45,7 +45,7 @@ export class PacketVerifiedHandler {
 
                     // Read the payload hash from the endpoint contract
                     const payloadHash: string = await this.client.readContract({
-                        address: destinationConfig.endpoint,
+                        address: config.networkB.endpoint,
                         abi: endpointABI,
                         functionName: 'inboundPayloadHash',
                     args: [normalizedReceiver, srcEid, sender, nonce]
@@ -56,7 +56,7 @@ export class PacketVerifiedHandler {
                     // Check if packet is executed (payload cleared and nonce within lazyInboundNonce)
                     if (payloadHash === EMPTY_PAYLOAD_HASH) {
                         const lazyInboundNonce: any = await this.client.readContract({
-                            address: destinationConfig.endpoint,
+                            address: config.networkB.endpoint,
                             abi: endpointABI,
                             functionName: 'lazyInboundNonce',
                         args: [normalizedReceiver, srcEid, sender]
@@ -69,7 +69,7 @@ export class PacketVerifiedHandler {
                     // Check if packet is executable (payload not nil and nonce within inboundNonce) if not already executable
                     if (!isExecutable && payloadHash !== NIL_PAYLOAD_HASH) {
                         const inboundNonce: any = await this.client.readContract({
-                            address: destinationConfig.endpoint,
+                            address: config.networkB.endpoint,
                             abi: endpointABI,
                             functionName: 'inboundNonce',
                         args: [normalizedReceiver, srcEid, sender]
