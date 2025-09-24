@@ -17,14 +17,14 @@ def deploy_contract(plan, networks, connections):
                     fees.append(conn["exec_fee"])
                 else:
                     fail("No network found for connection 'to' value: " + conn["to"])
-        dst_eids_str = ",".join(dst_eids)
+        dst_eids_str = ",".join([str(eid) for eid in dst_eids])
         fees_str = ",".join(fees)
 
         env_vars = {
             "NETWORK": active,
             "RPC": net.rpc,
             "ENDPOINT": net.endpoint,
-            "EID": net.eid,
+            "EID": str(net.eid),
             "PRIVATE_KEY": net.private_key,
             "DST_EIDS": dst_eids_str,
             "FEES": fees_str,

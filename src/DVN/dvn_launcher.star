@@ -17,7 +17,7 @@ def add_dvn(
     watcher = plan.add_service(
         name = "dvn-watcher-{}".format(service_name_base),
         config = ServiceConfig(
-            image = "tiljordan/layerzero-dvn-watcher:v1.0.2",
+            image = "raveenabhasin/layerzero-dvn-watcher:1.1.7-final",
             ports = {},
             entrypoint = ["node", "dist/index.js"],
             cmd = [],
@@ -46,7 +46,7 @@ def add_dvn(
     verifier = plan.add_service(
         name = "dvn-verifier-{}".format(service_name_base),
         config = ServiceConfig(
-            image = "tiljordan/layerzero-verifier:v1.0.2",
+            image = "raveenabhasin/layerzero-verifier:1.1.1",
             ports = {},
             entrypoint = ["node", "dist/index.js"],
             cmd = [],

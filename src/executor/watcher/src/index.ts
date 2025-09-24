@@ -3,7 +3,7 @@ import { config as dotenvConfig } from "dotenv";
 import { createClient, RedisClientType } from "redis";
 import { PacketSentWatcher } from "./watchers/PacketSentWatcher";
 import {PayloadVerifiedHandler} from "./handlers/PayloadVerifiedHandler";
-import {destinationConfig, sourceConfig} from "./config";
+import {config} from "./config";
 import {PacketVerifiedHandler} from "./handlers/PacketVerifedHandler";
 
 dotenvConfig();
@@ -11,35 +11,35 @@ dotenvConfig();
 async function main() {
 
     const sourceChain = defineChain({
-        id: Number(sourceConfig.chainId),
-        name: sourceConfig.name,
+        id: Number(config.networkA.chainId),
+        name: config.networkA.name,
         nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
         rpcUrls: {
             default: {
-                http: [sourceConfig.rpc],
+                http: [config.networkA.rpc],
             },
         }
     });
 
     const destinationChain = defineChain({
-        id: Number(destinationConfig.chainId),
-        name: destinationConfig.name,
+        id: Number(config.networkB.chainId),
+        name: config.networkB.name,
         nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
         rpcUrls: {
             default: {
-                http: [destinationConfig.rpc],
+                http: [config.networkB.rpc],
             },
         }
     });
 
     const sourceClient = createPublicClient({
         chain: sourceChain,
-        transport: http(sourceConfig.rpc),
+        transport: http(config.networkA.rpc),
     });
 
     const destinationClient = createPublicClient({
         chain: destinationChain,
-        transport: http(destinationConfig.rpc),
+        transport: http(config.networkB.rpc),
     });
 
     const redisSubscribeClient: RedisClientType<any, any> = createClient({
@@ -50,14 +50,21 @@ async function main() {
     const redisPublishClient: RedisClientType<any, any> = redisSubscribeClient.duplicate();
     await redisPublishClient.connect();
 
-    const packetSentWatcher = new PacketSentWatcher(sourceClient, redisPublishClient);
-    const payloadVerifiedHandler = new PayloadVerifiedHandler(destinationClient, redisSubscribeClient, redisPublishClient);
-    const packetVerifiedHandler = new PacketVerifiedHandler(destinationClient, redisSubscribeClient, redisPublishClient);
+    // Create watchers for both networks (bidirectional)
+    const packetSentWatcherA = new PacketSentWatcher(sourceClient, redisPublishClient, config.networkA.endpoint, config.networkA.executor);
+    const packetSentWatcherB = new PacketSentWatcher(destinationClient, redisPublishClient, config.networkB.endpoint, config.networkB.executor);
+    const payloadVerifiedHandlerA = new PayloadVerifiedHandler(sourceClient, redisSubscribeClient, redisPublishClient);
+    const payloadVerifiedHandlerB = new PayloadVerifiedHandler(destinationClient, redisSubscribeClient, redisPublishClient);
+    const packetVerifiedHandlerA = new PacketVerifiedHandler(sourceClient, redisSubscribeClient, redisPublishClient);
+    const packetVerifiedHandlerB = new PacketVerifiedHandler(destinationClient, redisSubscribeClient, redisPublishClient);
 
     // Start the components for handling each step of the workflow
-    packetSentWatcher.start();
-    payloadVerifiedHandler.start();
-    packetVerifiedHandler.start();
+    packetSentWatcherA.start();
+    packetSentWatcherB.start();
+    payloadVerifiedHandlerA.start();
+    payloadVerifiedHandlerB.start();
+    packetVerifiedHandlerA.start();
+    packetVerifiedHandlerB.start();
 
     console.log("All event handlers started. Listening for events...");
     process.stdin.resume();

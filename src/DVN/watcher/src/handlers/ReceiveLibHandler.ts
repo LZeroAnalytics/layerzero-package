@@ -1,6 +1,6 @@
 import {getAddress, PublicClient} from "viem";
 import { RedisClientType } from "redis";
-import { destinationConfig } from "../config";
+import { config } from "../config";
 import { abi as endpointABI } from "../abis/EndpointV2";
 import { abi as receiveUlnAbi } from "../abis/ReceiveUln302";
 
@@ -39,7 +39,7 @@ export class ReceiveLibHandler {
 
         // Call getReceiveLibrary on the destination chain endpoint to get the receive library address
         const result = await this.client.readContract({
-            address: destinationConfig.endpoint,
+            address: config.networkB.endpoint,
             abi: endpointABI,
             functionName: "getReceiveLibrary",
             args: [normalizedReceiver, srcEid]

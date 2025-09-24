@@ -1,6 +1,6 @@
 import { WalletClient, PublicClient, HttpTransport, Chain, Account } from "viem";
 import { RedisClientType } from "redis";
-import { dvnChainConfig } from "./config";
+import { config } from "./config";
 import { abi as dvnContractABI } from "./abis/DVNContract";
 import { privateKeyToAccount } from "viem/accounts";
 
@@ -23,10 +23,11 @@ export class DVNVerifier {
     }
     
     private initializeDVNInstances() {
-        for (let i = 0; i < dvnChainConfig.dvnAddresses.length; i++) {
-            const address = dvnChainConfig.dvnAddresses[i];
-            const name = dvnChainConfig.dvnNames[i];
-            const privateKey = dvnChainConfig.privateKeys[i];
+        // Initialize DVNs from Network A
+        for (let i = 0; i < config.networkA.dvnAddresses.length; i++) {
+            const address = config.networkA.dvnAddresses[i];
+            const name = config.networkA.dvnNames[i];
+            const privateKey = config.networkA.privateKeys[i];
             
             if (address && privateKey) {
                 const account = privateKeyToAccount(privateKey);
@@ -38,14 +39,41 @@ export class DVNVerifier {
                 
                 const dvnInstance: DVNInstance = {
                     address,
-                    name,
+                    name: `${name} (Network A)`,
                     privateKey,
                     walletClient,
                     publicClient: this.publicClient,
                 };
                 
                 this.dvnInstances.set(address.toLowerCase(), dvnInstance);
-                console.log(`Initialized DVN instance: ${name} (${address})`);
+                console.log(`Initialized Network A DVN instance: ${name} (${address})`);
+            }
+        }
+
+        // Initialize DVNs from Network B
+        for (let i = 0; i < config.networkB.dvnAddresses.length; i++) {
+            const address = config.networkB.dvnAddresses[i];
+            const name = config.networkB.dvnNames[i];
+            const privateKey = config.networkB.privateKeys[i];
+            
+            if (address && privateKey) {
+                const account = privateKeyToAccount(privateKey);
+                const walletClient: WalletClient<HttpTransport, Chain, Account> = {
+                    chain: this.publicClient.chain,
+                    transport: this.publicClient.transport,
+                    account,
+                } as WalletClient<HttpTransport, Chain, Account>;
+                
+                const dvnInstance: DVNInstance = {
+                    address,
+                    name: `${name} (Network B)`,
+                    privateKey,
+                    walletClient,
+                    publicClient: this.publicClient,
+                };
+                
+                this.dvnInstances.set(address.toLowerCase(), dvnInstance);
+                console.log(`Initialized Network B DVN instance: ${name} (${address})`);
             }
         }
     }
@@ -75,10 +103,10 @@ export class DVNVerifier {
         // Check if the receive lib from the event equals the trusted one from config
         if (
             verification.libraryAddress.toLowerCase() !==
-            dvnChainConfig.trustedReceiveLib.toLowerCase()
+            config.networkA.trustedReceiveLib.toLowerCase()
         ) {
             console.log(
-                `Receive lib mismatch: expected ${dvnChainConfig.trustedReceiveLib}, got ${verification.libraryAddress}`
+                `Receive lib mismatch: expected ${config.networkA.trustedReceiveLib}, got ${verification.libraryAddress}`
             );
             return;
         }
@@ -108,7 +136,7 @@ export class DVNVerifier {
             console.log(`OApp specified ${allDVNs.length} DVNs, found ${dvnsToProcess.length} configured DVNs`);
         } else {
             // No OApp specification - use default behavior
-            if (dvnChainConfig.useAllDVNs) {
+            if (config.useAllDVNs) {
                 dvnsToProcess = Array.from(this.dvnInstances.values());
                 console.log(`Using all ${dvnsToProcess.length} configured DVNs (default behavior)`);
             } else {

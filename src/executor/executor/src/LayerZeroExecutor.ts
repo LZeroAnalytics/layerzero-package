@@ -3,7 +3,7 @@ import {Chain} from 'viem/chains';
 import {config as dotenvConfig} from 'dotenv';
 import {abi as endpointABI} from "./abis/EndpointV2";
 import {RedisClientType} from "redis";
-import {chainConfig} from "./config";
+import {config} from "./config";
 import {bytes32ToEthAddress, hexZeroPadTo32} from "@layerzerolabs/lz-v2-utilities";
 
 dotenvConfig();
@@ -43,7 +43,7 @@ export class LayerZeroExecutor {
         const extraData = "0x";
 
         const txResult = await this.walletClient.writeContract({
-            address: chainConfig.endpoint,
+            address: config.networkA.endpoint,
             abi: endpointABI,
             functionName: "lzReceive",
             args: [origin, receiver, guid, message, extraData],

@@ -5,26 +5,26 @@ import {
     http,
     PublicClient,
 } from "viem";
-import { dvnChainConfig } from "./config";
+import { config } from "./config";
 import { DVNVerifier } from "./Verifier";
 import {createClient, RedisClientType} from "redis";
 
 dotenvConfig();
 
 const chain = defineChain({
-    id: dvnChainConfig.chainId,
-    name: dvnChainConfig.name,
+    id: config.networkA.chainId,
+    name: config.networkA.name,
     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
     rpcUrls: {
         default: {
-            http: [dvnChainConfig.rpc],
+            http: [config.networkA.rpc],
         },
     },
 });
 
 const publicClient: PublicClient = createPublicClient({
     chain,
-    transport: http(dvnChainConfig.rpc),
+    transport: http(config.networkA.rpc),
 });
 
 const redisClient: RedisClientType<any, any> = createClient({

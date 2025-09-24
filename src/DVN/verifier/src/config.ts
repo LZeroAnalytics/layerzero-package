@@ -22,12 +22,12 @@ function parseNetworkConfig(prefix: 'NETWORK_A' | 'NETWORK_B'): NetworkConfig {
     const dvnAddresses = (process.env[`${prefix}_DVN_ADDRESSES`] || "")
         .split(',')
         .map(addr => addr.trim() as `0x${string}`)
-        .filter(addr => addr && addr !== "");
+        .filter(addr => addr && addr.length > 0);
     
     const privateKeys = (process.env[`${prefix}_DVN_PRIVATE_KEYS`] || "")
         .split(',')
         .map(key => key.trim() as `0x${string}`)
-        .filter(key => key && key !== "");
+        .filter(key => key && key.length > 0);
     
     const dvnNames = (process.env[`${prefix}_DVN_NAMES`] || "")
         .split(',')
