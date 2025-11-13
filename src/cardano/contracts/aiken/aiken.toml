@@ -1,0 +1,10 @@
+name = "LZeroAnalytics/layerzero-cardano"
+version = "0.1.0"
+plutusVersion = "v3"
+licences = ["MIT"]
+description = "LayerZero V2 core contracts adapted for Cardano in Aiken (Endpoint, ULN302, Executor, DVN)."
+
+[[dependencies]]
+name = "aiken-lang/stdlib"
+version = "v2"
+source = "github"
